@@ -1,68 +1,139 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { Header } from '@/components/Header';
+import { CodeInput } from '@/components/CodeInput';
+import { AnalyzeButton } from '@/components/AnalyzeButton';
+import { ResultsDisplay } from '@/components/ResultsDisplay';
+import { AnalysisResult, ApplicationState } from '@/types';
 
 export default function Home() {
+  const [code, setCode] = useState('');
+  const [appState, setAppState] = useState<ApplicationState>('idle');
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [retryCountdown, setRetryCountdown] = useState(0);
+
+  // Lógica de atraso (sleep)
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const handleAnalyze = async () => {
+    if (!code.trim()) return;
+
+    setAppState('loading');
+    setErrorMessage('');
+    setResult(null);
+
+    let attempt = 0;
+    const maxRetries = 3;
+    const baseDelayMs = 2000; // Começa com 2 segundos
+
+    while (attempt <= maxRetries) {
+      try {
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ code }),
+        });
+
+        if (response.ok) {
+          const data: AnalysisResult = await response.json();
+          setResult(data);
+          setAppState('success');
+          return; // Sucesso, sai do loop
+        }
+
+        // Se der 429 Too Many Requests, aplica o Exponential Backoff
+        if (response.status === 429) {
+          if (attempt === maxRetries) {
+            throw new Error('Limite de tentativas excedido. Tente novamente mais tarde.');
+          }
+          
+          attempt++;
+          // Exponential Backoff: 2s, 4s, 8s
+          const currentDelayMs = baseDelayMs * Math.pow(2, attempt - 1);
+          const currentDelaySec = currentDelayMs / 1000;
+          
+          setAppState('retrying');
+          setRetryCountdown(currentDelaySec);
+
+          // Um pequeno loop para atualizar a contagem regressiva na UI
+          for (let i = currentDelaySec; i > 0; i--) {
+            setRetryCountdown(i);
+            await delay(1000);
+          }
+          
+          setAppState('loading'); // Volta para loading antes da nova tentativa
+          continue; // Tenta de novo
+        }
+
+        // Se for outro erro (500, 400), não tenta de novo, lança o erro
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro desconhecido ao processar.');
+
+      } catch (error: any) {
+        if (attempt >= maxRetries || error.message.includes('limite')) {
+          setErrorMessage(error.message || 'Ocorreu um erro ao tentar se conectar ao servidor.');
+          setAppState('error');
+          return;
+        }
+        
+        // Se for erro de rede (fetch failed), também tenta de novo com backoff
+        attempt++;
+        const currentDelayMs = baseDelayMs * Math.pow(2, attempt - 1);
+        const currentDelaySec = currentDelayMs / 1000;
+        
+        setAppState('retrying');
+        setRetryCountdown(currentDelaySec);
+
+        for (let i = currentDelaySec; i > 0; i--) {
+          setRetryCountdown(i);
+          await delay(1000);
+        }
+        
+        setAppState('loading');
+      }
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-emerald-500/30">
+      <Header />
+      
+      <main className="max-w-4xl mx-auto px-4 py-12 flex flex-col gap-8">
+        
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-zinc-100">Cole seu código</h2>
+          <p className="text-zinc-400">Nossa IA analisará a qualidade e sugerirá melhorias focadas em Clean Code.</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="flex flex-col gap-6 bg-zinc-900/50 p-6 border border-zinc-800 rounded-2xl">
+          <CodeInput 
+            value={code}
+            onChange={setCode}
+            disabled={appState === 'loading' || appState === 'retrying'}
+          />
+          
+          <AnalyzeButton 
+            onClick={handleAnalyze}
+            disabled={!code.trim() || appState === 'loading' || appState === 'retrying'}
+            state={appState}
+            retrySeconds={retryCountdown}
+          />
+
+          {appState === 'error' && (
+            <div className="bg-red-950/50 border border-red-900/50 text-red-200 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+              <span className="font-semibold">Erro:</span> {errorMessage}
+            </div>
+          )}
         </div>
+
+        {appState === 'success' && result && (
+          <ResultsDisplay result={result} />
+        )}
+
       </main>
     </div>
   );
