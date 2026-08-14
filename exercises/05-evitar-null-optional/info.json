@@ -1,0 +1,12 @@
+{
+  "id": "05-evitar-null-optional",
+  "title": "5. Evitar Retorno de Null & Exceções Claras",
+  "category": "Tratamento de Erros",
+  "difficulty": "Avançado",
+  "description": "O método engole exceções com bloco catch vazio e retorna null quando nada é encontrado. Refatore utilizando Optional<T> e código expressivo.",
+  "objectives": [
+    "Usar Optional<String> no tipo de retorno em vez de null.",
+    "Eliminar bloco catch vazio que engolia erros.",
+    "Tornar a busca concisa e elegante utilizando Streams da API Java ou verificação limpa."
+  ]
+}

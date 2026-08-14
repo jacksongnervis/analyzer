@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { CodeInput } from '@/components/CodeInput';
 import { AnalyzeButton } from '@/components/AnalyzeButton';
 import { ResultsDisplay } from '@/components/ResultsDisplay';
-import { AnalysisResult, ApplicationState, AppTheme } from '@/types';
+import { ExerciseSelector } from '@/components/ExerciseSelector';
+import { AnalysisResult, ApplicationState, AppTheme, Exercise } from '@/types';
 import { AlertCircle } from 'lucide-react';
 import { sanitizeCode } from '@/lib/sanitizer';
 import { checkJavaHeuristics } from '@/lib/heuristics';
@@ -13,6 +14,8 @@ import { checkJavaHeuristics } from '@/lib/heuristics';
 export default function Home() {
   const [theme, setTheme] = useState<AppTheme>('dark');
   const [code, setCode] = useState('');
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [appState, setAppState] = useState<ApplicationState>('idle');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -20,6 +23,20 @@ export default function Home() {
 
   const isSubmittingRef = useRef<boolean>(false);
   const isDark = theme === 'dark';
+
+  // Busca exercícios públicos do servidor na inicialização
+  useEffect(() => {
+    fetch('/api/exercises')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setExercises(data);
+        }
+      })
+      .catch((err) => {
+        console.error('Erro ao carregar exercícios públicos:', err);
+      });
+  }, []);
 
   // Lógica de atraso (sleep)
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -29,6 +46,33 @@ export default function Home() {
   const trimmedCode = code.trim();
   const isTooShort = trimmedCode.length > 0 && trimmedCode.length < minLength;
   const isTooLong = code.length > maxLength;
+
+  const handleSelectExercise = (exercise: Exercise | null) => {
+    if (appState === 'loading' || appState === 'retrying') return;
+
+    if (exercise) {
+      setSelectedExerciseId(exercise.id);
+      setCode(exercise.initialCode);
+    } else {
+      setSelectedExerciseId(null);
+      setCode('');
+    }
+
+    setResult(null);
+    setAppState('idle');
+    setErrorMessage('');
+  };
+
+  const handleResetExerciseCode = () => {
+    if (!selectedExerciseId) return;
+    const exercise = exercises.find((ex) => ex.id === selectedExerciseId);
+    if (exercise) {
+      setCode(exercise.initialCode);
+      setResult(null);
+      setAppState('idle');
+      setErrorMessage('');
+    }
+  };
 
   const handleAnalyze = async () => {
     // Trava síncrona contra múltiplos cliques rápidos / race conditions
@@ -81,7 +125,10 @@ export default function Home() {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ code: sanitizedCode }),
+            body: JSON.stringify({
+              code: sanitizedCode,
+              exerciseId: selectedExerciseId || undefined,
+            }),
           });
 
           if (response.ok) {
@@ -174,7 +221,7 @@ export default function Home() {
             Analise seu código Java
           </h2>
           <p className={`text-sm ${isDark ? 'text-zinc-400' : 'text-slate-600'}`}>
-            Nossa IA avalia a adesão a Clean Code, boas práticas de POO, legibilidade, concisão e aponta bad smells com recomendações de refatoração.
+            Pratique refatoração com exercícios guiados ou teste seu próprio código. A IA avalia com base em princípios reais de Clean Code.
           </p>
         </div>
 
@@ -186,6 +233,16 @@ export default function Home() {
               : 'bg-white border-slate-200 shadow-xl shadow-slate-200/60'
           }`}
         >
+          {/* Seletor de Exercícios Guiados */}
+          <ExerciseSelector 
+            exercises={exercises}
+            selectedExerciseId={selectedExerciseId}
+            onSelectExercise={handleSelectExercise}
+            onResetExerciseCode={handleResetExerciseCode}
+            theme={theme}
+            disabled={appState === 'loading' || appState === 'retrying'}
+          />
+
           <CodeInput 
             value={code}
             onChange={(val) => {

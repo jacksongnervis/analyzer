@@ -1,0 +1,12 @@
+{
+  "id": "03-clausulas-guarda",
+  "title": "3. Cláusulas Guarda e Retorno Antecipado",
+  "category": "Fluxo de Controle",
+  "difficulty": "Intermediário",
+  "description": "O código possui múltiplos if/else aninhados em formato de pirâmide (\"Arrow Anti-pattern\"). Refatore aplicando Early Return (Guard Clauses) para simplificar a leitura.",
+  "objectives": [
+    "Eliminar a pirâmide de if/else aninhados.",
+    "Validar casos de erro/recusa primeiro e retornar imediatamente (Early Return).",
+    "Manter o fluxo principal linear e sem complexidade desnecessária."
+  ]
+}

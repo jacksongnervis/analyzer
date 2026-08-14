@@ -1,0 +1,12 @@
+{
+  "id": "04-constantes-comentarios",
+  "title": "4. Constantes e Comentários Limpos",
+  "category": "Boas Práticas",
+  "difficulty": "Iniciante",
+  "description": "O código está cheio de números mágicos literais (12, 85, 60, 0.15, 500.0, 0.08) e comentários que apenas repetem o que o código faz. Substitua por constantes expressivas.",
+  "objectives": [
+    "Criar constantes estáticas ou variáveis com nomes significativos para as regras de negócio numéricas.",
+    "Remover comentários redundantes que não agregam valor.",
+    "Tornar o método autoexplicativo."
+  ]
+}

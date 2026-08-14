@@ -10,6 +10,22 @@ body {
   color: var(--foreground);
 }
 
+/* === EXPAND MODAL ANIMATION === */
+@keyframes editorExpand {
+  0% {
+    opacity: 0;
+    transform: scale(0.88) translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-editor-expand {
+  animation: editorExpand 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* === PRISM SYNTAX HIGHLIGHTING (DRACULA THEME) === */
 .syntax-dracula .token.comment,
 .syntax-dracula .token.prolog,

@@ -335,16 +335,16 @@ export function CodeInput({
       {/* Backdrop for Expanded Modal Mode */}
       {isExpanded && (
         <div 
-          className="fixed inset-0 bg-black/85 backdrop-blur-md z-40 animate-in fade-in duration-200"
+          className="fixed inset-0 bg-black/80 backdrop-blur-md z-40 animate-in fade-in duration-300 ease-out"
           onClick={() => setIsExpanded(false)}
         />
       )}
 
-      {/* Single Editor Container (Toggles between In-Page and Fullscreen Modal seamlessly) */}
+      {/* Single Editor Container (Animates smoothly expanding into full screen) */}
       <div 
-        className={`w-full rounded-xl overflow-hidden transition-all duration-200 border flex flex-col ${
+        className={`w-full rounded-xl overflow-hidden border flex flex-col ${
           isExpanded 
-            ? 'fixed inset-3 sm:inset-6 md:inset-10 z-50 max-w-6xl mx-auto shadow-2xl shadow-black/80' 
+            ? 'fixed inset-3 sm:inset-6 md:inset-10 z-50 max-w-6xl mx-auto shadow-2xl shadow-black/90 animate-editor-expand' 
             : 'relative min-h-[380px] h-[380px] shadow-lg'
         } ${
           isDark 
@@ -452,11 +452,11 @@ export function CodeInput({
               </button>
             </div>
 
-            {/* Expand / Minimize / Close Button */}
+            {/* Expand / Minimize / Close Button (Icon Only) */}
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+              className={`p-1.5 rounded-lg border transition-colors ${
                 isDark 
                   ? isExpanded 
                     ? 'bg-red-950/40 border-red-800/60 text-red-300 hover:bg-red-900/50' 
@@ -466,17 +466,12 @@ export function CodeInput({
                     : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900'
               }`}
               title={isExpanded ? 'Fechar tela cheia (ESC)' : 'Expandir editor em tela cheia'}
+              aria-label={isExpanded ? 'Fechar tela cheia' : 'Expandir editor em tela cheia'}
             >
               {isExpanded ? (
-                <>
-                  <X className="w-3.5 h-3.5 text-red-400" />
-                  <span>Fechar <kbd className="hidden sm:inline font-mono text-[10px] opacity-70 ml-1">ESC</kbd></span>
-                </>
+                <X className="w-4 h-4 text-red-400" />
               ) : (
-                <>
-                  <Maximize2 className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Aumentar tela</span>
-                </>
+                <Maximize2 className="w-4 h-4 text-amber-400" />
               )}
             </button>
           </div>

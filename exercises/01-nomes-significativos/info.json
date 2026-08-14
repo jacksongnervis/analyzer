@@ -1,0 +1,12 @@
+{
+  "id": "01-nomes-significativos",
+  "title": "1. Nomes Significativos e Clareza",
+  "category": "Nomenclatura",
+  "difficulty": "Iniciante",
+  "description": "Variáveis com nomes crípticos de uma só letra e abreviações confusas tornam o código ilegível. Refatore os nomes para revelar a real intenção de cada elemento.",
+  "objectives": [
+    "Substituir variáveis crípticas (p, d, t, dsc, vl, tot) por nomes expressivos e autoexplicativos.",
+    "Renomear a classe e o método para descrever claramente sua finalidade.",
+    "Eliminar comentários óbvios que apenas tentavam compensar a má nomenclatura."
+  ]
+}

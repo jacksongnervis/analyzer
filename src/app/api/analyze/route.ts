@@ -5,6 +5,7 @@ import { sanitizeCode } from '@/lib/sanitizer';
 import { checkJavaHeuristics } from '@/lib/heuristics';
 import { getCodeHash, getCachedAnalysis, setCachedAnalysis } from '@/lib/cache';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { getServerExerciseById } from '@/lib/exercisesServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,8 +74,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // 5. Cache por Hash SHA-256
-    const codeHash = getCodeHash(sanitizedCode);
+    // 5. Verifica se há contexto de exercício pré-pronto com solução de referência
+    const exerciseId = typeof body.exerciseId === 'string' ? body.exerciseId : undefined;
+    const exercise = exerciseId ? getServerExerciseById(exerciseId) : undefined;
+
+    // 6. Cache por Hash SHA-256 (inclui o exerciseId se houver para evitar colisões com modo livre)
+    const cacheKey = exercise ? `${sanitizedCode}_ex_${exercise.id}` : sanitizedCode;
+    const codeHash = getCodeHash(cacheKey);
     const cachedResult = getCachedAnalysis(codeHash);
 
     if (cachedResult) {
@@ -84,7 +90,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // 6. Verificação da chave da API do Groq
+    // 7. Verificação da chave da API do Groq
     if (!process.env.GROQ_API_KEY) {
       return NextResponse.json(
         { error: 'Chave da API do Groq não configurada no servidor.' }, 
@@ -96,8 +102,20 @@ export async function POST(request: Request) {
       apiKey: process.env.GROQ_API_KEY,
     });
 
-    // 7. Encapsula o código com tags delimitadoras para isolar dados de instruções
-    const userMessage = `<codigo_para_analise>\n${sanitizedCode}\n</codigo_para_analise>`;
+    // 8. Encapsula o código e injeta a solução de referência de exemplo quando for um exercício
+    let userMessage = `<codigo_para_analise>\n${sanitizedCode}\n</codigo_para_analise>`;
+
+    if (exercise) {
+      userMessage += `\n\n<contexto_do_exercicio>
+Exercício: ${exercise.title} (${exercise.category} - Dificuldade: ${exercise.difficulty})
+Objetivo: ${exercise.description}
+Critérios de foco esperados:
+${exercise.objectives.map(obj => `- ${obj}`).join('\n')}
+
+Código de referência esperado (Clean Code ideal):
+${exercise.expectedCleanCode}
+</contexto_do_exercicio>`;
+    }
 
     // Chamada à API da Groq
     const chatCompletion = await groq.chat.completions.create({
@@ -116,7 +134,7 @@ export async function POST(request: Request) {
       throw new Error('Resposta vazia da API.');
     }
 
-    // 8. Parse e validação do JSON
+    // 9. Parse e validação do JSON
     const parsedData = JSON.parse(aiContent);
 
     // Salva no cache

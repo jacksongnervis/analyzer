@@ -1,0 +1,12 @@
+{
+  "id": "02-responsabilidade-unica",
+  "title": "2. Responsabilidade Única (SRP)",
+  "category": "Funções & SRP",
+  "difficulty": "Intermediário",
+  "description": "O método processOrder faz coisas demais: valida estoque, calcula desconto de atacado, salva no banco e envia e-mail. Divida-o em funções menores com responsabilidades únicas.",
+  "objectives": [
+    "Extrair a validação de quantidade e estoque para um método separado.",
+    "Extrair o cálculo de total com desconto para um método dedicado.",
+    "Manter o método principal orquestrador, limpo e em um único nível de abstração."
+  ]
+}
