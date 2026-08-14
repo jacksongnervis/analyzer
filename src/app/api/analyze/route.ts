@@ -1,34 +1,113 @@
 import { NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { CLEAN_CODE_ANALYZER_PROMPT } from '@/prompts/analyzerPrompt';
+import { sanitizeCode } from '@/lib/sanitizer';
+import { checkJavaHeuristics } from '@/lib/heuristics';
+import { getCodeHash, getCachedAnalysis, setCachedAnalysis } from '@/lib/cache';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
+const MAX_CODE_LENGTH = 5000;
+const MIN_CODE_LENGTH = 10;
+
 export async function POST(request: Request) {
   try {
-    const { code } = await request.json();
+    // 1. Rate Limiting por IP
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim() 
+      || request.headers.get('x-real-ip') 
+      || 'anonymous-client';
 
-    if (!code) {
-      return NextResponse.json({ error: 'Código não fornecido.' }, { status: 400 });
+    const rateLimit = checkRateLimit(clientIp);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { 
+          error: `Muitas requisições deste IP. Aguarde ${rateLimit.resetInSeconds} segundos para tentar novamente.` 
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': rateLimit.resetInSeconds.toString(),
+          }
+        }
+      );
     }
 
+    // 2. Validação do corpo da requisição
+    const body = await request.json().catch(() => null);
+
+    if (!body || typeof body.code !== 'string') {
+      return NextResponse.json(
+        { error: 'Payload inválido. O campo "code" deve ser uma string.' }, 
+        { status: 400 }
+      );
+    }
+
+    // 3. Sanitização de caracteres invisíveis, de controle e normalização de espaços
+    const sanitizedCode = sanitizeCode(body.code);
+
+    if (sanitizedCode.length === 0) {
+      return NextResponse.json({ error: 'Código Java não fornecido.' }, { status: 400 });
+    }
+
+    if (sanitizedCode.length < MIN_CODE_LENGTH) {
+      return NextResponse.json(
+        { error: 'O código enviado é muito curto para análise (mínimo 10 caracteres).' },
+        { status: 400 }
+      );
+    }
+
+    if (sanitizedCode.length > MAX_CODE_LENGTH) {
+      return NextResponse.json(
+        { error: `O código excede o limite máximo permitido de ${MAX_CODE_LENGTH.toLocaleString('pt-BR')} caracteres.` },
+        { status: 400 }
+      );
+    }
+
+    // 4. Heurística Java: valida se o código parece Java antes de chamar a IA
+    const heuristic = checkJavaHeuristics(sanitizedCode);
+    if (!heuristic.isValid) {
+      return NextResponse.json(
+        { error: heuristic.reason || 'O código fornecido não parece ser Java válido.' },
+        { status: 400 }
+      );
+    }
+
+    // 5. Cache por Hash SHA-256
+    const codeHash = getCodeHash(sanitizedCode);
+    const cachedResult = getCachedAnalysis(codeHash);
+
+    if (cachedResult) {
+      return NextResponse.json(cachedResult, {
+        status: 200,
+        headers: { 'X-Cache': 'HIT' }
+      });
+    }
+
+    // 6. Verificação da chave da API do Groq
     if (!process.env.GROQ_API_KEY) {
-      return NextResponse.json({ error: 'Chave da API do Groq não configurada no servidor.' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Chave da API do Groq não configurada no servidor.' }, 
+        { status: 500 }
+      );
     }
 
     const groq = new Groq({
       apiKey: process.env.GROQ_API_KEY,
     });
 
+    // 7. Encapsula o código com tags delimitadoras para isolar dados de instruções
+    const userMessage = `<codigo_para_analise>\n${sanitizedCode}\n</codigo_para_analise>`;
+
     // Chamada à API da Groq
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         { role: 'system', content: CLEAN_CODE_ANALYZER_PROMPT },
-        { role: 'user', content: code },
+        { role: 'user', content: userMessage },
       ],
       model: 'llama-3.3-70b-versatile',
-      temperature: 0.1, // Temperatura baixa para respostas mais determinísticas e aderentes ao JSON
-      response_format: { type: 'json_object' }, // Força a saída como JSON (suportado em alguns modelos)
+      temperature: 0.1,
+      response_format: { type: 'json_object' },
     });
 
     const aiContent = chatCompletion.choices[0]?.message?.content;
@@ -37,19 +116,24 @@ export async function POST(request: Request) {
       throw new Error('Resposta vazia da API.');
     }
 
-    // Tentar fazer o parse do JSON para validar
+    // 8. Parse e validação do JSON
     const parsedData = JSON.parse(aiContent);
 
-    // Retorna a resposta parseada
-    return NextResponse.json(parsedData, { status: 200 });
+    // Salva no cache
+    setCachedAnalysis(codeHash, parsedData);
+
+    return NextResponse.json(parsedData, {
+      status: 200,
+      headers: { 'X-Cache': 'MISS' }
+    });
 
   } catch (error: any) {
     console.error('Erro ao analisar código:', error);
 
-    // Identificar erro de Rate Limit (Too Many Requests)
+    // Identificar erro de Rate Limit da Groq
     if (error?.status === 429 || error?.message?.includes('429')) {
       return NextResponse.json(
-        { error: 'Muitas requisições. Rate limit excedido.' },
+        { error: 'Muitas requisições simultâneas na API da IA. Rate limit excedido.' },
         { status: 429 }
       );
     }

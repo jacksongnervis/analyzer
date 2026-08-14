@@ -1,26 +1,143 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #09090b;
+  --foreground: #f4f4f5;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* === PRISM SYNTAX HIGHLIGHTING (DRACULA THEME) === */
+.syntax-dracula .token.comment,
+.syntax-dracula .token.prolog,
+.syntax-dracula .token.doctype,
+.syntax-dracula .token.cdata {
+  color: #6272a4;
+  font-style: italic;
+}
+
+.syntax-dracula .token.punctuation {
+  color: #f8f8f2;
+}
+
+.syntax-dracula .token.namespace {
+  opacity: 0.7;
+}
+
+.syntax-dracula .token.property,
+.syntax-dracula .token.tag,
+.syntax-dracula .token.constant,
+.syntax-dracula .token.symbol,
+.syntax-dracula .token.deleted {
+  color: #ff79c6;
+}
+
+.syntax-dracula .token.boolean,
+.syntax-dracula .token.number {
+  color: #bd93f9;
+}
+
+.syntax-dracula .token.selector,
+.syntax-dracula .token.attr-name,
+.syntax-dracula .token.string,
+.syntax-dracula .token.char,
+.syntax-dracula .token.builtin,
+.syntax-dracula .token.inserted {
+  color: #f1fa8c;
+}
+
+.syntax-dracula .token.operator,
+.syntax-dracula .token.entity,
+.syntax-dracula .token.url,
+.syntax-dracula .language-css .token.string,
+.syntax-dracula .style .token.string {
+  color: #ff79c6;
+}
+
+.syntax-dracula .token.atrule,
+.syntax-dracula .token.attr-value,
+.syntax-dracula .token.keyword {
+  color: #ff79c6;
+  font-weight: 600;
+}
+
+.syntax-dracula .token.function,
+.syntax-dracula .token.class-name {
+  color: #50fa7b;
+}
+
+.syntax-dracula .token.regex,
+.syntax-dracula .token.important,
+.syntax-dracula .token.variable {
+  color: #ffb86c;
+}
+
+.syntax-dracula .token.annotation {
+  color: #ffb86c;
+  font-weight: 500;
+}
+
+/* === PRISM SYNTAX HIGHLIGHTING (LIGHT THEME) === */
+.syntax-light .token.comment,
+.syntax-light .token.prolog,
+.syntax-light .token.doctype,
+.syntax-light .token.cdata {
+  color: #64748b;
+  font-style: italic;
+}
+
+.syntax-light .token.punctuation {
+  color: #334155;
+}
+
+.syntax-light .token.property,
+.syntax-light .token.tag,
+.syntax-light .token.constant,
+.syntax-light .token.symbol,
+.syntax-light .token.deleted {
+  color: #9333ea;
+}
+
+.syntax-light .token.boolean,
+.syntax-light .token.number {
+  color: #d97706;
+}
+
+.syntax-light .token.selector,
+.syntax-light .token.attr-name,
+.syntax-light .token.string,
+.syntax-light .token.char,
+.syntax-light .token.builtin,
+.syntax-light .token.inserted {
+  color: #16a34a;
+}
+
+.syntax-light .token.operator,
+.syntax-light .token.entity,
+.syntax-light .token.url {
+  color: #0284c7;
+}
+
+.syntax-light .token.atrule,
+.syntax-light .token.attr-value,
+.syntax-light .token.keyword {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.syntax-light .token.function {
+  color: #2563eb;
+}
+
+.syntax-light .token.class-name {
+  color: #0284c7;
+  font-weight: 600;
+}
+
+.syntax-light .token.annotation {
+  color: #ea580c;
+  font-weight: 500;
 }

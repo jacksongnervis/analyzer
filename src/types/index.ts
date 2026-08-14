@@ -5,3 +5,5 @@ export interface AnalysisResult {
 }
 
 export type ApplicationState = 'idle' | 'loading' | 'retrying' | 'success' | 'error';
+
+export type AppTheme = 'dark' | 'light';
