@@ -11,8 +11,25 @@ const cacheMap = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
 const MAX_CACHE_ENTRIES = 500;
 
+/**
+ * Normaliza o código de forma canônica para que variações inofensivas de espaçamento
+ * ou quebras de linha extras acertem o cache com 100% de precisão.
+ */
+export function getCanonicalCode(code: string): string {
+  return code
+    .replace(/\r\n/g, '\n')
+    // Remove espaços no final das linhas
+    .replace(/[ \t]+$/gm, '')
+    // Normaliza múltiplas quebras de linha consecutivas para uma só
+    .replace(/\n+/g, '\n')
+    // Normaliza múltiplos espaços consecutivos que não sejam identação inicial
+    .replace(/([^\n\s])[ \t]{2,}/g, '$1 ')
+    .trim();
+}
+
 export function getCodeHash(code: string): string {
-  return createHash('sha256').update(code).digest('hex');
+  const canonicalCode = getCanonicalCode(code);
+  return createHash('sha256').update(canonicalCode).digest('hex');
 }
 
 export function getCachedAnalysis(hash: string): AnalysisResult | null {

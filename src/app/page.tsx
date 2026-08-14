@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Header } from '@/components/Header';
 import { CodeInput } from '@/components/CodeInput';
 import { AnalyzeButton } from '@/components/AnalyzeButton';
@@ -16,6 +16,7 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState('');
   const [retryCountdown, setRetryCountdown] = useState(0);
 
+  const isSubmittingRef = useRef<boolean>(false);
   const isDark = theme === 'dark';
 
   // Lógica de atraso (sleep)
@@ -28,6 +29,8 @@ export default function Home() {
   const isTooLong = code.length > maxLength;
 
   const handleAnalyze = async () => {
+    // Trava síncrona contra múltiplos cliques rápidos / race conditions
+    if (isSubmittingRef.current) return;
     if (!trimmedCode) return;
 
     if (trimmedCode.length < minLength) {
@@ -42,6 +45,7 @@ export default function Home() {
       return;
     }
 
+    isSubmittingRef.current = true;
     setAppState('loading');
     setErrorMessage('');
     setResult(null);
@@ -50,27 +54,54 @@ export default function Home() {
     const maxRetries = 3;
     const baseDelayMs = 2000;
 
-    while (attempt <= maxRetries) {
-      try {
-        const response = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ code: trimmedCode }),
-        });
+    try {
+      while (attempt <= maxRetries) {
+        try {
+          const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ code: trimmedCode }),
+          });
 
-        if (response.ok) {
-          const data: AnalysisResult = await response.json();
-          setResult(data);
-          setAppState('success');
-          return;
-        }
+          if (response.ok) {
+            const data: AnalysisResult = await response.json();
+            setResult(data);
+            setAppState('success');
+            return;
+          }
 
-        // Se der 429 Too Many Requests, aplica o Exponential Backoff
-        if (response.status === 429) {
-          if (attempt === maxRetries) {
-            throw new Error('Limite de requisições excedido. Tente novamente em instantes.');
+          // Se der 429 Too Many Requests, aplica o Exponential Backoff
+          if (response.status === 429) {
+            if (attempt === maxRetries) {
+              throw new Error('Limite de requisições excedido. Tente novamente em instantes.');
+            }
+            
+            attempt++;
+            const currentDelayMs = baseDelayMs * Math.pow(2, attempt - 1);
+            const currentDelaySec = currentDelayMs / 1000;
+            
+            setAppState('retrying');
+            setRetryCountdown(currentDelaySec);
+
+            for (let i = currentDelaySec; i > 0; i--) {
+              setRetryCountdown(i);
+              await delay(1000);
+            }
+            
+            setAppState('loading');
+            continue;
+          }
+
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Erro desconhecido ao processar a análise.');
+
+        } catch (error: any) {
+          if (attempt >= maxRetries || error.message.includes('limite') || error.message.includes('caracteres') || error.message.includes('Java') || error.message.includes('comentários') || error.message.includes('spam')) {
+            setErrorMessage(error.message || 'Ocorreu um erro ao tentar se conectar ao servidor.');
+            setAppState('error');
+            return;
           }
           
           attempt++;
@@ -86,33 +117,10 @@ export default function Home() {
           }
           
           setAppState('loading');
-          continue;
         }
-
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Erro desconhecido ao processar a análise.');
-
-      } catch (error: any) {
-        if (attempt >= maxRetries || error.message.includes('limite') || error.message.includes('caracteres')) {
-          setErrorMessage(error.message || 'Ocorreu um erro ao tentar se conectar ao servidor.');
-          setAppState('error');
-          return;
-        }
-        
-        attempt++;
-        const currentDelayMs = baseDelayMs * Math.pow(2, attempt - 1);
-        const currentDelaySec = currentDelayMs / 1000;
-        
-        setAppState('retrying');
-        setRetryCountdown(currentDelaySec);
-
-        for (let i = currentDelaySec; i > 0; i--) {
-          setRetryCountdown(i);
-          await delay(1000);
-        }
-        
-        setAppState('loading');
       }
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
@@ -184,7 +192,7 @@ export default function Home() {
               }`}
             >
               <AlertCircle className="w-4 h-4 shrink-0" />
-              <span><strong>Erro:</strong> {errorMessage}</span>
+              <span><strong>Atenção:</strong> {errorMessage}</span>
             </div>
           )}
         </div>
