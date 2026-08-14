@@ -7,6 +7,8 @@ import { AnalyzeButton } from '@/components/AnalyzeButton';
 import { ResultsDisplay } from '@/components/ResultsDisplay';
 import { AnalysisResult, ApplicationState, AppTheme } from '@/types';
 import { AlertCircle } from 'lucide-react';
+import { sanitizeCode } from '@/lib/sanitizer';
+import { checkJavaHeuristics } from '@/lib/heuristics';
 
 export default function Home() {
   const [theme, setTheme] = useState<AppTheme>('dark');
@@ -31,27 +33,44 @@ export default function Home() {
   const handleAnalyze = async () => {
     // Trava síncrona contra múltiplos cliques rápidos / race conditions
     if (isSubmittingRef.current) return;
-    if (!trimmedCode) return;
+    
+    // 1. Sanitização e verificação prévia no cliente (ANTES de qualquer requisição)
+    const sanitizedCode = sanitizeCode(code);
 
-    if (trimmedCode.length < minLength) {
+    if (!sanitizedCode) {
+      setErrorMessage('Por favor, insira o código Java que deseja analisar.');
+      setAppState('error');
+      return;
+    }
+
+    if (sanitizedCode.length < minLength) {
       setErrorMessage(`O código precisa ter pelo menos ${minLength} caracteres para ser analisado.`);
       setAppState('error');
       return;
     }
 
-    if (code.length > maxLength) {
+    if (sanitizedCode.length > maxLength) {
       setErrorMessage(`O código ultrapassou o limite máximo de ${maxLength.toLocaleString('pt-BR')} caracteres.`);
       setAppState('error');
       return;
     }
 
+    // 2. Validação heurística de Java localmente antes de disparar o fetch
+    const heuristic = checkJavaHeuristics(sanitizedCode);
+    if (!heuristic.isValid) {
+      setErrorMessage(heuristic.reason || 'O código fornecido não parece ser Java válido.');
+      setAppState('error');
+      return;
+    }
+
+    // 3. Inicia o envio para a API
     isSubmittingRef.current = true;
     setAppState('loading');
     setErrorMessage('');
     setResult(null);
 
     let attempt = 0;
-    const maxRetries = 3;
+    const maxRetries = 2;
     const baseDelayMs = 2000;
 
     try {
@@ -62,7 +81,7 @@ export default function Home() {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ code: trimmedCode }),
+            body: JSON.stringify({ code: sanitizedCode }),
           });
 
           if (response.ok) {
@@ -72,16 +91,27 @@ export default function Home() {
             return;
           }
 
-          // Se der 429 Too Many Requests, aplica o Exponential Backoff
+          // Se for erro do cliente (ex: 400 Bad Request), exibe imediatamente sem retentativa
+          if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+            const errorData = await response.json().catch(() => ({}));
+            setErrorMessage(errorData.error || 'Não foi possível analisar o código fornecido.');
+            setAppState('error');
+            return;
+          }
+
+          // Se for 429 Too Many Requests (Rate Limit), aplica retry com backoff apenas se houver tentativas
           if (response.status === 429) {
-            if (attempt === maxRetries) {
-              throw new Error('Limite de requisições excedido. Tente novamente em instantes.');
+            const errorData = await response.json().catch(() => ({}));
+            if (attempt >= maxRetries) {
+              setErrorMessage(errorData.error || 'Limite de requisições excedido. Aguarde alguns instantes e tente novamente.');
+              setAppState('error');
+              return;
             }
-            
+
             attempt++;
             const currentDelayMs = baseDelayMs * Math.pow(2, attempt - 1);
             const currentDelaySec = currentDelayMs / 1000;
-            
+
             setAppState('retrying');
             setRetryCountdown(currentDelaySec);
 
@@ -89,25 +119,27 @@ export default function Home() {
               setRetryCountdown(i);
               await delay(1000);
             }
-            
+
             setAppState('loading');
             continue;
           }
 
+          // Para 500 ou outros erros inesperados do servidor
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Erro desconhecido ao processar a análise.');
+          throw new Error(errorData.error || 'Erro ao processar a análise no servidor.');
 
         } catch (error: any) {
-          if (attempt >= maxRetries || error.message.includes('limite') || error.message.includes('caracteres') || error.message.includes('Java') || error.message.includes('comentários') || error.message.includes('spam')) {
+          // Se for a última tentativa, finaliza com erro
+          if (attempt >= maxRetries) {
             setErrorMessage(error.message || 'Ocorreu um erro ao tentar se conectar ao servidor.');
             setAppState('error');
             return;
           }
-          
+
           attempt++;
           const currentDelayMs = baseDelayMs * Math.pow(2, attempt - 1);
           const currentDelaySec = currentDelayMs / 1000;
-          
+
           setAppState('retrying');
           setRetryCountdown(currentDelaySec);
 
@@ -115,7 +147,7 @@ export default function Home() {
             setRetryCountdown(i);
             await delay(1000);
           }
-          
+
           setAppState('loading');
         }
       }

@@ -5,17 +5,17 @@
 export function checkJavaHeuristics(code: string): { isValid: boolean; reason?: string } {
   const trimmed = code.trim();
 
-  // 1. Detecção de Spam de Teclas / Repetição excessiva de caracteres (Gibberish)
-  // Ex: "aaaaaaaaaaaaaa" ou "asdfasdfasdfasdf"
-  if (/(.)\1{7,}/.test(trimmed)) {
+  // 1. Detecção de Spam de Teclas / Repetição excessiva de letras (Gibberish)
+  // Ex: "aaaaaaaaaaaaaaaaaaaaa" (ignora espaços, quebras de linha e símbolos de código como '=', '-', '*')
+  if (/([a-zA-Z])\1{20,}/.test(trimmed)) {
     return {
       isValid: false,
       reason: 'O código contém repetição excessiva de caracteres consecutivos (spam de teclas).',
     };
   }
 
-  // Detecção de repetição de palavras idênticas em loop (ex: "public public public public")
-  if (/\b([a-zA-Z_]\w*)\b(?:\s+\1\b){3,}/.test(trimmed)) {
+  // Detecção de repetição massiva de palavras idênticas em loop (ex: "teste teste teste teste teste teste")
+  if (/\b([a-zA-Z_]\w{2,})\b(?:\s+\1\b){6,}/.test(trimmed)) {
     return {
       isValid: false,
       reason: 'O texto contém repetições anormais de palavras idênticas.',
