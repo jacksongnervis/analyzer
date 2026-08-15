@@ -56,9 +56,8 @@ export function ExerciseSelector({
       {/* Barra de Seleção de Exercícios */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <label className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
-            isDark ? 'text-zinc-400' : 'text-slate-500'
-          }`}>
+          <label className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 ${isDark ? 'text-zinc-400' : 'text-slate-500'
+            }`}>
             <BookOpen className="w-4 h-4 text-amber-500" />
             <span>Escolha um Exercício de Refatoração:</span>
           </label>
@@ -68,11 +67,10 @@ export function ExerciseSelector({
               type="button"
               onClick={() => handleExerciseChange(null)}
               disabled={disabled}
-              className={`text-xs flex items-center gap-1 transition-colors px-2 py-0.5 rounded-md ${
-                isDark 
-                  ? 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800' 
+              className={`text-xs flex items-center gap-1 transition-colors px-2 py-0.5 rounded-md ${isDark
+                  ? 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
                   : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
-              }`}
+                }`}
             >
               <X className="w-3 h-3" />
               <span>Voltar ao Modo Livre</span>
@@ -101,7 +99,7 @@ export function ExerciseSelector({
             `}
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Modo Livre (Personalizado)</span>
+            <span>Modo Livre</span>
           </button>
 
           {/* Botões dos Exercícios carregados dinamicamente */}
@@ -137,16 +135,14 @@ export function ExerciseSelector({
       {/* Cartão de Detalhes do Exercício Selecionado com Animação Suave */}
       {activeExercise && (
         <div
-          className={`p-4 rounded-xl border transition-all duration-500 ease-in-out shadow-sm ${
-            isDark
+          className={`p-4 rounded-xl border transition-all duration-500 ease-in-out shadow-sm ${isDark
               ? 'bg-zinc-950/60 border-zinc-800/80 text-zinc-300'
               : 'bg-slate-50/80 border-slate-200 text-slate-700'
-          }`}
+            }`}
         >
           {/* Header do Card */}
-          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-all duration-500 ease-in-out ${
-            isCollapsed ? '' : 'mb-3 pb-3 border-b border-inherit'
-          }`}>
+          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-all duration-500 ease-in-out ${isCollapsed ? '' : 'mb-3 pb-3 border-b border-inherit'
+            }`}>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-sm tracking-tight text-inherit">
                 {activeExercise.title}
@@ -154,9 +150,8 @@ export function ExerciseSelector({
               <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium border ${getDifficultyBadge(activeExercise.difficulty)}`}>
                 {activeExercise.difficulty}
               </span>
-              <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium border ${
-                isDark ? 'bg-zinc-800/70 border-zinc-700 text-zinc-400' : 'bg-slate-100 border-slate-200 text-slate-600'
-              }`}>
+              <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium border ${isDark ? 'bg-zinc-800/70 border-zinc-700 text-zinc-400' : 'bg-slate-100 border-slate-200 text-slate-600'
+                }`}>
                 {activeExercise.category}
               </span>
             </div>
@@ -166,11 +161,10 @@ export function ExerciseSelector({
                 type="button"
                 onClick={onResetExerciseCode}
                 disabled={disabled}
-                className={`text-xs font-medium flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all duration-200 active:scale-95 ${
-                  isDark
+                className={`text-xs font-medium flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all duration-200 active:scale-95 ${isDark
                     ? 'bg-zinc-900 border-zinc-700/70 text-zinc-300 hover:bg-zinc-800 hover:text-white'
                     : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 shadow-sm'
-                } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 title="Recarrega o código inicial do exercício para recomeçar a refatoração"
               >
                 <RotateCcw className="w-3 h-3 text-amber-500" />
@@ -180,26 +174,23 @@ export function ExerciseSelector({
               <button
                 type="button"
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className={`p-1.5 rounded-lg border transition-all duration-300 ${
-                  isDark
+                className={`p-1.5 rounded-lg border transition-all duration-300 ${isDark
                     ? 'bg-zinc-900 border-zinc-700/70 text-zinc-300 hover:bg-zinc-800 hover:text-white'
                     : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 shadow-sm'
-                } cursor-pointer`}
+                  } cursor-pointer`}
                 title={isCollapsed ? 'Expandir descrição e objetivos' : 'Recolher descrição e objetivos'}
                 aria-label={isCollapsed ? 'Expandir descrição e objetivos' : 'Recolher descrição e objetivos'}
               >
-                <ChevronDown className={`w-4 h-4 text-amber-500 transition-transform duration-500 ease-in-out ${
-                  isCollapsed ? '-rotate-90' : 'rotate-0'
-                }`} />
+                <ChevronDown className={`w-4 h-4 text-amber-500 transition-transform duration-500 ease-in-out ${isCollapsed ? '-rotate-90' : 'rotate-0'
+                  }`} />
               </button>
             </div>
           </div>
 
           {/* Área Recolhível com Animação Lenta e Suave */}
           <div
-            className={`grid transition-all duration-500 ease-in-out ${
-              isCollapsed ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'
-            }`}
+            className={`grid transition-all duration-500 ease-in-out ${isCollapsed ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'
+              }`}
           >
             <div className="overflow-hidden space-y-3">
               <p className="text-xs leading-relaxed">

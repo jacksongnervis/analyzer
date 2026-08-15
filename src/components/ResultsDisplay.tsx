@@ -1,5 +1,9 @@
+'use client';
+
+import { useEffect } from 'react';
 import { AnalysisResult, AppTheme } from '../types';
 import { AlertTriangle, CheckCircle2, Lightbulb, XCircle } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 interface ResultsDisplayProps {
   result: AnalysisResult;
@@ -8,27 +12,39 @@ interface ResultsDisplayProps {
 
 export function ResultsDisplay({ result, theme }: ResultsDisplayProps) {
   const isDark = theme === 'dark';
+  const score = result.pontuacao;
+
+  // Dispara chuva de confetes quando a nota for 9 ou 10
+  useEffect(() => {
+    if (score >= 9) {
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.65 },
+        colors: ['#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6'],
+      });
+    }
+  }, [score]);
 
   const getScoreColor = (score: number) => {
-    if (score > 7) return 'text-emerald-500';
+    if (score >= 8) return 'text-emerald-500';
     if (score >= 5) return 'text-amber-500';
-    return 'text-red-500';
+    return 'text-rose-500';
   };
 
   const getScoreIcon = (score: number) => {
-    if (score > 7) return <CheckCircle2 className="w-8 h-8 text-emerald-500" />;
+    if (score >= 8) return <CheckCircle2 className="w-8 h-8 text-emerald-500" />;
     if (score >= 5) return <AlertTriangle className="w-8 h-8 text-amber-500" />;
-    return <XCircle className="w-8 h-8 text-red-500" />;
+    return <XCircle className="w-8 h-8 text-rose-500" />;
   };
 
   return (
     <div className="w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
       {/* Score Section */}
-      <div 
+      <div
         className={`rounded-2xl p-6 flex items-center justify-between border transition-colors ${
-          isDark 
-            ? 'bg-zinc-900 border-zinc-800' 
+          isDark
+            ? 'bg-zinc-900 border-zinc-800'
             : 'bg-white border-slate-200 shadow-md shadow-slate-200/50'
         }`}
       >
@@ -50,10 +66,10 @@ export function ResultsDisplay({ result, theme }: ResultsDisplayProps) {
       </div>
 
       {/* Main Tip */}
-      <div 
+      <div
         className={`rounded-2xl p-6 flex gap-4 border transition-colors ${
-          isDark 
-            ? 'bg-emerald-950/30 border-emerald-900/50' 
+          isDark
+            ? 'bg-emerald-950/30 border-emerald-900/50'
             : 'bg-emerald-50 border-emerald-200 shadow-sm'
         }`}
       >
@@ -69,18 +85,18 @@ export function ResultsDisplay({ result, theme }: ResultsDisplayProps) {
       </div>
 
       {/* Bad Smells */}
-      <div 
+      <div
         className={`rounded-2xl p-6 border transition-colors ${
-          isDark 
-            ? 'bg-zinc-900 border-zinc-800' 
+          isDark
+            ? 'bg-zinc-900 border-zinc-800'
             : 'bg-white border-slate-200 shadow-md shadow-slate-200/50'
         }`}
       >
         <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
           <AlertTriangle className="w-5 h-5 text-amber-500" />
-          Problemas Encontrados (Bad Smells)
+          <span>Problemas Encontrados (Bad Smells)</span>
         </h3>
-        
+
         {result.problemas_encontrados.length === 0 ? (
           <p className={`text-sm ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
             Nenhum bad smell significativo encontrado. Excelente trabalho!
@@ -88,20 +104,19 @@ export function ResultsDisplay({ result, theme }: ResultsDisplayProps) {
         ) : (
           <ul className="space-y-3">
             {result.problemas_encontrados.map((problema, index) => (
-              <li 
-                key={index} 
+              <li
+                key={index}
                 className={`flex gap-3 text-sm leading-relaxed ${
                   isDark ? 'text-zinc-300' : 'text-slate-700'
                 }`}
               >
                 <span className="mt-0.5 font-bold text-amber-500">•</span>
-                {problema}
+                <span>{problema}</span>
               </li>
             ))}
           </ul>
         )}
       </div>
-
     </div>
   );
 }
