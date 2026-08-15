@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
 import { CLEAN_CODE_ANALYZER_PROMPT } from '@/prompts/analyzerPrompt';
 import { sanitizeCode } from '@/lib/sanitizer';
 import { checkJavaHeuristics } from '@/lib/heuristics';
 import { getCodeHash, getCachedAnalysis, setCachedAnalysis } from '@/lib/cache';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { getServerExerciseById } from '@/lib/exercisesServer';
+import { runLoadBalancedAnalysis, getGroqApiKeys } from '@/lib/groqPool';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,17 +90,14 @@ export async function POST(request: Request) {
       });
     }
 
-    // 7. Verificação da chave da API do Groq
-    if (!process.env.GROQ_API_KEY) {
+    // 7. Verificação das chaves da API do Groq no Pool
+    const availableKeys = getGroqApiKeys();
+    if (availableKeys.length === 0) {
       return NextResponse.json(
-        { error: 'Chave da API do Groq não configurada no servidor.' }, 
+        { error: 'Nenhuma chave da API do Groq configurada no servidor (.env).' }, 
         { status: 500 }
       );
     }
-
-    const groq = new Groq({
-      apiKey: process.env.GROQ_API_KEY,
-    });
 
     // 8. Encapsula o código do aluno e injeta o gabarito de referência quando for um exercício
     let userMessage = `<codigo_do_aluno_para_analise>\n${sanitizedCode}\n</codigo_do_aluno_para_analise>`;
@@ -117,24 +114,17 @@ ${exercise.expectedCleanCode}
 </gabarito_do_professor_para_comparacao>`;
     }
 
-    // Chamada à API da Groq
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        { role: 'system', content: CLEAN_CODE_ANALYZER_PROMPT },
-        { role: 'user', content: userMessage },
-      ],
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.1,
-      response_format: { type: 'json_object' },
+    // 9. Chamada balanceada à API Groq com Round-Robin e Failover automático
+    const aiContent = await runLoadBalancedAnalysis({
+      systemPrompt: CLEAN_CODE_ANALYZER_PROMPT,
+      userMessage,
     });
-
-    const aiContent = chatCompletion.choices[0]?.message?.content;
 
     if (!aiContent) {
       throw new Error('Resposta vazia da API.');
     }
 
-    // 9. Parse e validação do JSON
+    // 10. Parse e validação do JSON
     const parsedData = JSON.parse(aiContent);
 
     // Salva no cache
@@ -148,12 +138,12 @@ ${exercise.expectedCleanCode}
   } catch (error: unknown) {
     console.error('Erro ao analisar código:', error);
 
-    const isRateLimit = (typeof error === 'object' && error !== null && 'status' in error && error.status === 429) ||
+    const isRateLimit = (typeof error === 'object' && error !== null && 'status' in error && (error as { status: number }).status === 429) ||
       (error instanceof Error && error.message.includes('429'));
 
     if (isRateLimit) {
       return NextResponse.json(
-        { error: 'Muitas requisições simultâneas na API da IA. Rate limit excedido.' },
+        { error: 'Muitas requisições simultâneas na API da IA. Rate limit excedido. Tente novamente em alguns segundos.' },
         { status: 429 }
       );
     }
