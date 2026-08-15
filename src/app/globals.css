@@ -14,7 +14,7 @@ body {
 @keyframes editorExpand {
   0% {
     opacity: 0;
-    transform: scale(0.88) translateY(18px);
+    transform: scale(0.92) translateY(12px);
   }
   100% {
     opacity: 1;
@@ -23,7 +23,7 @@ body {
 }
 
 .animate-editor-expand {
-  animation: editorExpand 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: editorExpand 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* === PRISM SYNTAX HIGHLIGHTING (DRACULA THEME) === */

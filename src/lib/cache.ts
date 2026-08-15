@@ -18,11 +18,8 @@ const MAX_CACHE_ENTRIES = 500;
 export function getCanonicalCode(code: string): string {
   return code
     .replace(/\r\n/g, '\n')
-    // Remove espaços no final das linhas
     .replace(/[ \t]+$/gm, '')
-    // Normaliza múltiplas quebras de linha consecutivas para uma só
     .replace(/\n+/g, '\n')
-    // Normaliza múltiplos espaços consecutivos que não sejam identação inicial
     .replace(/([^\n\s])[ \t]{2,}/g, '$1 ')
     .trim();
 }
@@ -36,7 +33,6 @@ export function getCachedAnalysis(hash: string): AnalysisResult | null {
   const entry = cacheMap.get(hash);
   if (!entry) return null;
 
-  // Verifica se expirou
   if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
     cacheMap.delete(hash);
     return null;
@@ -46,10 +42,11 @@ export function getCachedAnalysis(hash: string): AnalysisResult | null {
 }
 
 export function setCachedAnalysis(hash: string, result: AnalysisResult): void {
-  // Limpeza de cache mais antigo se exceder o limite
   if (cacheMap.size >= MAX_CACHE_ENTRIES) {
-    const oldestKey = cacheMap.keys().next().value;
-    if (oldestKey) cacheMap.delete(oldestKey);
+    const firstKey = cacheMap.keys().next().value;
+    if (typeof firstKey === 'string') {
+      cacheMap.delete(firstKey);
+    }
   }
 
   cacheMap.set(hash, {

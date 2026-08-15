@@ -8,9 +8,22 @@ const rateLimitMap = new Map<string, RateLimitEntry>();
 // Configuração: máximo de 15 requisições por minuto por IP
 const WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS_PER_WINDOW = 15;
+const MAX_ENTRIES = 1000;
+
+function cleanupExpiredEntries(now: number): void {
+  if (rateLimitMap.size > MAX_ENTRIES) {
+    for (const [ip, entry] of rateLimitMap.entries()) {
+      if (now > entry.resetTime) {
+        rateLimitMap.delete(ip);
+      }
+    }
+  }
+}
 
 export function checkRateLimit(ip: string): { allowed: boolean; remaining: number; resetInSeconds: number } {
   const now = Date.now();
+  cleanupExpiredEntries(now);
+
   const entry = rateLimitMap.get(ip);
 
   if (!entry || now > entry.resetTime) {

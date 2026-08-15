@@ -2,20 +2,53 @@
  * Heurística abrangente para verificar se a entrada tem características reais de código Java
  * antes de despachar para a API da IA, economizando tempo e tokens.
  */
+
+// Regexes pré-compiladas em nível de módulo para melhor performance e conformidade SonarQube
+const KEY_SPAM_REGEX = /([a-z])\1{20,}/i;
+const HTML_XML_REGEX = /^\s*<!DOCTYPE\s+html|^\s*<html[\s>]|<\/(?:div|p|body|script|head|section|table)>/i;
+const JSON_OBJECT_REGEX = /^\s*\{[\s\n]*"[a-zA-Z0-9_$-]+"\s*:[\s\S]*\}\s*$/;
+const JSON_ARRAY_REGEX = /^\s*\[[\s\n]*\{[\s\S]*\}\s*\]\s*$/;
+const SQL_QUERY_REGEX = /^\s*(?:SELECT\s+[\s\S]+?\s+FROM|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|CREATE\s+TABLE|ALTER\s+TABLE|DROP\s+TABLE)\b/i;
+const PYTHON_REGEX = /^\s*(?:def\s+[a-zA-Z_]\w*\s*\(.*?\)\s*:|elif\s+|import\s+pandas|import\s+numpy|from\s+\w+\s+import)/m;
+const PHP_REGEX = /<\?php|^\s*\$[a-zA-Z_]\w*\s*=/m;
+const CSHARP_REGEX = /\busing\s+System(?:\.\w+)*\s*;|\bConsole\.(?:WriteLine|Write)\b|^\s*namespace\s+[A-Za-z0-9_.]+\s*\{/m;
+const JS_TS_REGEX = /\b(?:const|let|var)\s+[a-zA-Z_]\w*\s*=\s*(?:\(.*?\)|[a-zA-Z_]\w*)\s*=>|\bconsole\.(?:log|warn|error|info)\s*\(|\bexport\s+default\s+|\bimport\s+React\b|\bdocument\.(?:getElementById|querySelector)\b/;
+const MARKDOWN_HEADER_REGEX = /^#{1,6}\s+[^\n]+/m;
+
+const JAVA_KEYWORDS_REGEX = /\b(?:public|private|protected|class|interface|enum|record|void|int|long|double|float|boolean|char|byte|short|String|Integer|Long|Double|Boolean|List|Map|Set|ArrayList|HashMap|HashSet|Optional|Stream|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|throws|new|static|final|abstract|synchronized|volatile|transient|extends|implements|package|import|super|this|null|true|false|System\.out|System\.err|Override|Autowired|Service|Component|Repository|Controller|RestController|Entity|Table|Column|Id|Getter|Setter|Builder|Value|Data|Slf4j)\b/;
+const JAVA_SYMBOLS_REGEX = /[{};]/;
+const JAVA_METHOD_REGEX = /\w+\s*\([^)]*\)\s*(?:[{;]|\s*->)/;
+
+/**
+ * Detecção linear segura de repetição massiva de palavras (sem risco de ReDoS)
+ */
+function hasConsecutiveWordSpam(text: string): boolean {
+  const words = text.split(/\s+/).filter(w => w.length >= 3);
+  let count = 1;
+  for (let i = 1; i < words.length; i++) {
+    if (words[i].toLowerCase() === words[i - 1].toLowerCase()) {
+      count++;
+      if (count >= 7) return true;
+    } else {
+      count = 1;
+    }
+  }
+  return false;
+}
+
 export function checkJavaHeuristics(code: string): { isValid: boolean; reason?: string } {
   const trimmed = code.trim();
 
   // 1. Detecção de Spam de Teclas / Repetição excessiva de letras (Gibberish)
-  // Ex: "aaaaaaaaaaaaaaaaaaaaa" (ignora espaços, quebras de linha e símbolos de código como '=', '-', '*')
-  if (/([a-zA-Z])\1{20,}/.test(trimmed)) {
+  if (KEY_SPAM_REGEX.test(trimmed)) {
     return {
       isValid: false,
       reason: 'O código contém repetição excessiva de caracteres consecutivos (spam de teclas).',
     };
   }
 
-  // Detecção de repetição massiva de palavras idênticas em loop (ex: "teste teste teste teste teste teste")
-  if (/\b([a-zA-Z_]\w{2,})\b(?:\s+\1\b){6,}/.test(trimmed)) {
+  // Detecção linear de repetição massiva de palavras idênticas
+  if (hasConsecutiveWordSpam(trimmed)) {
     return {
       isValid: false,
       reason: 'O texto contém repetições anormais de palavras idênticas.',
@@ -23,7 +56,6 @@ export function checkJavaHeuristics(code: string): { isValid: boolean; reason?: 
   }
 
   // 2. Detecção de código "Só com Comentários"
-  // Remove comentários de linha única (//...) e de bloco (/*...*/)
   const codeWithoutComments = trimmed
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\/\/.*/g, '')
@@ -37,71 +69,56 @@ export function checkJavaHeuristics(code: string): { isValid: boolean; reason?: 
   }
 
   // 3. Filtros Específicos para Outras Linguagens e Formatos de Arquivo
-
-  // HTML / XML
-  if (/^\s*<!DOCTYPE\s+html/i.test(trimmed) || /^\s*<html[\s>]/i.test(trimmed) || /<\/(div|p|body|script|head|section|table)>/i.test(trimmed)) {
+  if (HTML_XML_REGEX.test(trimmed)) {
     return {
       isValid: false,
       reason: 'O código fornecido parece ser HTML / marcação web, não código Java.',
     };
   }
 
-  // JSON Puro (ex: { "key": "value" })
-  if (/^\s*\{[\s\n]*"[a-zA-Z0-9_$-]+"\s*:[\s\S]*\}\s*$/.test(trimmed) || /^\s*\[[\s\n]*\{[\s\S]*\}\s*\]\s*$/.test(trimmed)) {
+  if (JSON_OBJECT_REGEX.test(trimmed) || JSON_ARRAY_REGEX.test(trimmed)) {
     return {
       isValid: false,
       reason: 'O código fornecido é um arquivo JSON, não código Java.',
     };
   }
 
-  // SQL Queries (ex: SELECT ... FROM ..., INSERT INTO ..., CREATE TABLE ...)
-  if (/^\s*(SELECT\s+[\s\S]+?\s+FROM|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|CREATE\s+TABLE|ALTER\s+TABLE|DROP\s+TABLE)\b/i.test(trimmed)) {
+  if (SQL_QUERY_REGEX.test(trimmed)) {
     return {
       isValid: false,
       reason: 'O código fornecido parece ser uma query SQL, não código Java.',
     };
   }
 
-  // Python (ex: def funcao():, elif, print("..."), import pandas)
-  if (/^\s*(def\s+[a-zA-Z_]\w*\s*\(.*?\)\s*:|elif\s+|import\s+pandas|import\s+numpy|from\s+\w+\s+import)/m.test(trimmed)) {
+  if (PYTHON_REGEX.test(trimmed)) {
     return {
       isValid: false,
       reason: 'O código fornecido parece ser Python. Por favor, envie código Java.',
     };
   }
 
-  // PHP (ex: <?php, $variavel)
-  if (/<\?php/i.test(trimmed) || /^\s*\$[a-zA-Z_]\w*\s*=/m.test(trimmed)) {
+  if (PHP_REGEX.test(trimmed)) {
     return {
       isValid: false,
       reason: 'O código fornecido parece ser PHP. Por favor, envie código Java.',
     };
   }
 
-  // C# (ex: using System;, Console.WriteLine, namespace MeuNamespace)
-  if (/\busing\s+System(\.\w+)*\s*;/i.test(trimmed) || /\bConsole\.(WriteLine|Write)\b/.test(trimmed) || /^\s*namespace\s+[A-Za-z0-9_.]+\s*\{/m.test(trimmed)) {
+  if (CSHARP_REGEX.test(trimmed)) {
     return {
       isValid: false,
       reason: 'O código fornecido parece ser C#. Por favor, envie código Java.',
     };
   }
 
-  // JavaScript / TypeScript (ex: const x = () =>, console.log, export default, import React)
-  if (
-    /\b(const|let|var)\s+[a-zA-Z_]\w*\s*=\s*(\(.*?\)|[a-zA-Z_]\w*)\s*=>/.test(trimmed) ||
-    /\bconsole\.(log|warn|error|info)\s*\(/.test(trimmed) ||
-    /\bexport\s+default\s+/.test(trimmed) ||
-    /\bimport\s+React\b/.test(trimmed) ||
-    /\bdocument\.(getElementById|querySelector)\b/.test(trimmed)
-  ) {
+  if (JS_TS_REGEX.test(trimmed)) {
     return {
       isValid: false,
       reason: 'O código fornecido parece ser JavaScript/TypeScript. Por favor, envie código Java.',
     };
   }
 
-  // Markdown ou Texto Livre com cabeçalhos markdown
-  if (/^#{1,6}\s+[^\n]+/m.test(trimmed) && !/[;{}]/.test(trimmed)) {
+  if (MARKDOWN_HEADER_REGEX.test(trimmed) && !JAVA_SYMBOLS_REGEX.test(trimmed)) {
     return {
       isValid: false,
       reason: 'O texto fornecido parece ser um documento Markdown ou texto formatado, não código Java.',
@@ -120,11 +137,9 @@ export function checkJavaHeuristics(code: string): { isValid: boolean; reason?: 
   }
 
   // 5. Verificação de Palavras-Chave e Sintaxe Java
-  const javaKeywordsRegex = /\b(public|private|protected|class|interface|enum|record|void|int|long|double|float|boolean|char|byte|short|String|Integer|Long|Double|Boolean|List|Map|Set|ArrayList|HashMap|HashSet|Optional|Stream|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|throws|new|static|final|abstract|synchronized|volatile|transient|extends|implements|package|import|super|this|null|true|false|System\.out|System\.err|Override|Autowired|Service|Component|Repository|Controller|RestController|Entity|Table|Column|Id|Getter|Setter|Builder|Value|Data|Slf4j)\b/;
-
-  const hasJavaKeyword = javaKeywordsRegex.test(trimmed);
-  const hasBracesOrSemicolons = /[{};]/.test(trimmed);
-  const hasMethodCallOrDeclaration = /\w+\s*\([^)]*\)\s*([{;]|\s*->)/.test(trimmed);
+  const hasJavaKeyword = JAVA_KEYWORDS_REGEX.test(trimmed);
+  const hasBracesOrSemicolons = JAVA_SYMBOLS_REGEX.test(trimmed);
+  const hasMethodCallOrDeclaration = JAVA_METHOD_REGEX.test(trimmed);
 
   if (!hasJavaKeyword && !hasBracesOrSemicolons && !hasMethodCallOrDeclaration) {
     return {

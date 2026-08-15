@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useMemo, useEffect, KeyboardEvent } from 'react';
-import { Moon, Sun, Maximize2, Minimize2, Coffee, Copy, Check, Trash2, X } from 'lucide-react';
+import { Moon, Sun, Maximize2, Coffee, Copy, Check, Trash2, X } from 'lucide-react';
 import { AppTheme } from '@/types';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-clike';
@@ -92,9 +92,10 @@ export function CodeInput({
   // Focus textarea when opening expanded mode
   useEffect(() => {
     if (isExpanded) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         textareaRef.current?.focus();
       }, 50);
+      return () => clearTimeout(timer);
     }
   }, [isExpanded]);
 
@@ -490,7 +491,7 @@ export function CodeInput({
             }`}
           >
             {Array.from({ length: lineCount }, (_, i) => (
-              <div key={i + 1}>{i + 1}</div>
+              <div key={`gutter-line-${i + 1}`}>{i + 1}</div>
             ))}
           </div>
 
