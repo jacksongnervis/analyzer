@@ -1,12 +1,13 @@
 {
-  "id": "04-constantes-comentarios",
-  "title": "4. Constantes e Comentários Limpos",
-  "category": "Boas Práticas",
-  "difficulty": "Iniciante",
-  "description": "O código está cheio de números mágicos literais (12, 85, 60, 0.15, 500.0, 0.08) e comentários que apenas repetem o que o código faz. Substitua por constantes expressivas.",
+  "id": "04-tratamento-excecoes-dominio",
+  "title": "4. Tratamento de Exceções e Lógica de Domínio",
+  "category": "Tratamento de Exceções e POO",
+  "difficulty": "Avançado",
+  "description": "O sistema valida regras de negócio imprimindo mensagens na tela, utiliza um bloco genérico que 'engole' exceções reais e carece de polimorfismo no cálculo das diárias. Refatore criando exceções customizadas, aplicando programação defensiva e separando o domínio da interface de usuário.",
   "objectives": [
-    "Criar constantes estáticas ou variáveis com nomes significativos para as regras de negócio numéricas.",
-    "Remover comentários redundantes que não agregam valor.",
-    "Tornar o método autoexplicativo."
+    "A validação das regras de negócio (como impedir reservas no passado) está protegendo a integridade do objeto através do lançamento de exceções customizadas, ou o sistema apenas imprime um erro na tela?",
+    "O bloco 'try-catch' identifica e trata falhas específicas adequadamente (como formatação de data inválida e regras de domínio violadas), ou usa um 'catch (Exception)' genérico que esconde o verdadeiro problema?",
+    "O cálculo do valor da reserva está amarrado a condicionais ('if/else') no método principal, ou foi abstraído usando polimorfismo (Interfaces/Herança) para que cada tipo de quarto saiba calcular seu próprio valor?",
+    "A lógica de negócios foi totalmente separada da camada de interação com o usuário (onde ficam os 'Scanners' e 'System.out'), garantindo o Princípio da Responsabilidade Única?"
   ]
 }

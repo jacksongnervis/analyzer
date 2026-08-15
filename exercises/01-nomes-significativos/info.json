@@ -3,10 +3,10 @@
   "title": "1. Nomes Significativos e Clareza",
   "category": "Nomenclatura",
   "difficulty": "Iniciante",
-  "description": "Variáveis com nomes crípticos de uma só letra e abreviações confusas tornam o código ilegível. Refatore os nomes para revelar a real intenção de cada elemento.",
+  "description": "Variáveis com nomes crípticos de uma só letra (d, f, o, v) e termos informais tornam a lógica do caixa eletrônico difícil de acompanhar. Refatore os nomes para revelar a real intenção de cada variável e elemento do código.",
   "objectives": [
-    "Substituir variáveis crípticas (p, d, t, dsc, vl, tot) por nomes expressivos e autoexplicativos.",
-    "Renomear a classe e o método para descrever claramente sua finalidade.",
-    "Eliminar comentários óbvios que apenas tentavam compensar a má nomenclatura."
+    "As variáveis (como d, f, o, v) são entendíveis apenas pelo seu nome e revelam claramente a sua função?",
+    "O nome da classe e do pacote explicam de forma clara qual é o propósito do código e o domínio do problema?",
+    "As mensagens exibidas para o usuário são profissionais, claras e fáceis de entender?"
   ]
 }
