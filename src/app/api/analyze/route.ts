@@ -102,19 +102,19 @@ export async function POST(request: Request) {
       apiKey: process.env.GROQ_API_KEY,
     });
 
-    // 8. Encapsula o código e injeta a solução de referência de exemplo quando for um exercício
-    let userMessage = `<codigo_para_analise>\n${sanitizedCode}\n</codigo_para_analise>`;
+    // 8. Encapsula o código do aluno e injeta o gabarito de referência quando for um exercício
+    let userMessage = `<codigo_do_aluno_para_analise>\n${sanitizedCode}\n</codigo_do_aluno_para_analise>`;
 
     if (exercise) {
-      userMessage += `\n\n<contexto_do_exercicio>
+      userMessage += `\n\n<gabarito_do_professor_para_comparacao>
 Exercício: ${exercise.title} (${exercise.category} - Dificuldade: ${exercise.difficulty})
 Objetivo: ${exercise.description}
-Critérios de foco esperados:
+Critérios esperados:
 ${exercise.objectives.map(obj => `- ${obj}`).join('\n')}
 
-Código de referência esperado (Clean Code ideal):
+Gabarito ideal de referência:
 ${exercise.expectedCleanCode}
-</contexto_do_exercicio>`;
+</gabarito_do_professor_para_comparacao>`;
     }
 
     // Chamada à API da Groq
@@ -145,11 +145,13 @@ ${exercise.expectedCleanCode}
       headers: { 'X-Cache': 'MISS' }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao analisar código:', error);
 
-    // Identificar erro de Rate Limit da Groq
-    if (error?.status === 429 || error?.message?.includes('429')) {
+    const isRateLimit = (typeof error === 'object' && error !== null && 'status' in error && error.status === 429) ||
+      (error instanceof Error && error.message.includes('429'));
+
+    if (isRateLimit) {
       return NextResponse.json(
         { error: 'Muitas requisições simultâneas na API da IA. Rate limit excedido.' },
         { status: 429 }

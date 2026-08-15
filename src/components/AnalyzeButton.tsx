@@ -15,8 +15,8 @@ export function AnalyzeButton({ onClick, disabled, state, theme, retrySeconds }:
 
   const getButtonStyles = () => {
     if (disabled || isBusy) {
-      return isDark 
-        ? 'bg-zinc-800 text-zinc-500 border border-zinc-700/50 cursor-not-allowed' 
+      return isDark
+        ? 'bg-zinc-800 text-zinc-500 border border-zinc-700/50 cursor-not-allowed'
         : 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed';
     }
 

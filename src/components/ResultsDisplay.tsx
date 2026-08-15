@@ -105,7 +105,7 @@ export function ResultsDisplay({ result, theme }: ResultsDisplayProps) {
           <ul className="space-y-3">
             {result.problemas_encontrados.map((problema, index) => (
               <li
-                key={index}
+                key={`problem-${index}-${problema.slice(0, 20)}`}
                 className={`flex gap-3 text-sm leading-relaxed ${
                   isDark ? 'text-zinc-300' : 'text-slate-700'
                 }`}

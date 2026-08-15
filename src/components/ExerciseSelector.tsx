@@ -204,7 +204,7 @@ export function ExerciseSelector({
                 </div>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
                   {activeExercise.objectives.map((obj, i) => (
-                    <li key={i} className="text-xs flex items-start gap-1.5">
+                    <li key={`${activeExercise.id}-obj-${i}`} className="text-xs flex items-start gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
                       <span className={isDark ? 'text-zinc-400' : 'text-slate-600'}>{obj}</span>
                     </li>

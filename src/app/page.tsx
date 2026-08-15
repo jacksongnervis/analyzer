@@ -175,10 +175,12 @@ export default function Home() {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData.error || 'Erro ao processar a análise no servidor.');
 
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errMessage = error instanceof Error ? error.message : 'Ocorreu um erro ao tentar se conectar ao servidor.';
+
           // Se for a última tentativa, finaliza com erro
           if (attempt >= maxRetries) {
-            setErrorMessage(error.message || 'Ocorreu um erro ao tentar se conectar ao servidor.');
+            setErrorMessage(errMessage);
             setAppState('error');
             return;
           }
