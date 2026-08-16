@@ -1,19 +1,67 @@
 'use client';
 
 import { useState, useRef, useMemo, useEffect, KeyboardEvent } from 'react';
-import { Moon, Sun, Maximize2, Coffee, Copy, Check, Trash2, X } from 'lucide-react';
+import { Moon, Sun, Maximize2, Copy, Check, Trash2, X, FileCode, RotateCcw } from 'lucide-react';
 import { AppTheme } from '@/types';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-java';
 
 interface CodeInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  disabled: boolean;
-  theme: AppTheme;
-  onToggleTheme: (theme: AppTheme) => void;
-  maxLength?: number;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly disabled: boolean;
+  readonly theme: AppTheme;
+  readonly onToggleTheme: (theme: AppTheme) => void;
+  readonly onReset?: () => void;
+  readonly maxLength?: number;
+}
+
+const LEADING_SPACES_REGEX = /^ +/;
+const LEADING_WHITESPACE_REGEX = /^\s*/;
+
+function getCharCountColorClass(isAtLimit: boolean, isNearLimit: boolean, isDark: boolean): string {
+  if (isAtLimit) {
+    return 'text-red-400 font-semibold';
+  }
+  if (isNearLimit) {
+    return 'text-yellow-400';
+  }
+  if (isDark) {
+    return 'text-zinc-500';
+  }
+  return 'text-slate-400';
+}
+
+function getEditorContainerClasses(isExpanded: boolean, isDark: boolean): string {
+  const baseClasses = 'w-full rounded-xl overflow-hidden border flex flex-col transition-all';
+  
+  let layoutClasses = 'relative min-h-[380px] h-[380px] shadow-lg';
+  if (isExpanded) {
+    layoutClasses = 'fixed inset-3 sm:inset-6 md:inset-10 z-50 max-w-6xl mx-auto shadow-2xl shadow-black/90 animate-editor-expand';
+  }
+
+  let themeClasses = 'border-slate-300 bg-white shadow-slate-200/60';
+  if (isDark) {
+    themeClasses = 'border-zinc-800 bg-zinc-950 shadow-black/60';
+  }
+
+  return `${baseClasses} ${layoutClasses} ${themeClasses}`;
+}
+
+function getExpandButtonClasses(isExpanded: boolean, isDark: boolean): string {
+  const base = 'p-1.5 rounded-lg border cursor-pointer transition-colors';
+
+  if (isExpanded && isDark) {
+    return `${base} bg-red-950/40 border-red-800/60 text-red-300 hover:bg-red-900/50`;
+  }
+  if (isExpanded) {
+    return `${base} bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100`;
+  }
+  if (isDark) {
+    return `${base} bg-zinc-950 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100`;
+  }
+  return `${base} bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900`;
 }
 
 export function CodeInput({ 
@@ -22,8 +70,9 @@ export function CodeInput({
   disabled, 
   theme,
   onToggleTheme,
+  onReset,
   maxLength = 5000 
-}: CodeInputProps) {
+}: Readonly<CodeInputProps>) {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -124,9 +173,16 @@ export function CodeInput({
 
         const newLines = allLines.map((line, idx) => {
           if (idx >= startLineIdx && idx <= endLineIdx) {
-            const spacesToRemove = line.startsWith(tabSpaces) 
-              ? 4 
-              : line.match(/^ +/)?.[0].length || 0;
+            let spacesToRemove = 0;
+            if (line.startsWith(tabSpaces)) {
+              spacesToRemove = 4;
+            } else {
+              const matchedLeadingSpaces = LEADING_SPACES_REGEX.exec(line);
+              if (matchedLeadingSpaces) {
+                spacesToRemove = matchedLeadingSpaces[0].length;
+              }
+            }
+
             const toRemove = Math.min(4, spacesToRemove);
 
             if (toRemove > 0) {
@@ -145,39 +201,36 @@ export function CodeInput({
           textarea.selectionStart = Math.max(0, selectionStart - charsRemovedBeforeStart);
           textarea.selectionEnd = Math.max(0, selectionEnd - totalCharsRemoved);
         });
+      } else if (selectionStart !== selectionEnd) {
+        // Tab: Multi-line indent
+        const linesBefore = value.substring(0, selectionStart).split('\n');
+        const startLineIdx = linesBefore.length - 1;
+        const allLines = value.split('\n');
+        const linesSelected = value.substring(selectionStart, selectionEnd).split('\n');
+        const endLineIdx = startLineIdx + linesSelected.length - 1;
+
+        const newLines = allLines.map((line, idx) => {
+          if (idx >= startLineIdx && idx <= endLineIdx) {
+            return tabSpaces + line;
+          }
+          return line;
+        });
+
+        const nextVal = newLines.join('\n');
+        onChange(nextVal);
+
+        requestAnimationFrame(() => {
+          textarea.selectionStart = selectionStart + 4;
+          textarea.selectionEnd = selectionEnd + (endLineIdx - startLineIdx + 1) * 4;
+        });
       } else {
-        // Tab: Indent
-        if (selectionStart !== selectionEnd) {
-          // Multi-line indent
-          const linesBefore = value.substring(0, selectionStart).split('\n');
-          const startLineIdx = linesBefore.length - 1;
-          const allLines = value.split('\n');
-          const linesSelected = value.substring(selectionStart, selectionEnd).split('\n');
-          const endLineIdx = startLineIdx + linesSelected.length - 1;
+        // Tab: Single cursor: Insert 4 spaces
+        const nextVal = value.substring(0, selectionStart) + tabSpaces + value.substring(selectionEnd);
+        onChange(nextVal);
 
-          const newLines = allLines.map((line, idx) => {
-            if (idx >= startLineIdx && idx <= endLineIdx) {
-              return tabSpaces + line;
-            }
-            return line;
-          });
-
-          const nextVal = newLines.join('\n');
-          onChange(nextVal);
-
-          requestAnimationFrame(() => {
-            textarea.selectionStart = selectionStart + 4;
-            textarea.selectionEnd = selectionEnd + (endLineIdx - startLineIdx + 1) * 4;
-          });
-        } else {
-          // Single cursor: Insert 4 spaces
-          const nextVal = value.substring(0, selectionStart) + tabSpaces + value.substring(selectionEnd);
-          onChange(nextVal);
-
-          requestAnimationFrame(() => {
-            textarea.selectionStart = textarea.selectionEnd = selectionStart + 4;
-          });
-        }
+        requestAnimationFrame(() => {
+          textarea.selectionStart = textarea.selectionEnd = selectionStart + 4;
+        });
       }
       return;
     }
@@ -190,7 +243,7 @@ export function CodeInput({
       const textAfterCursor = value.substring(selectionEnd);
       const currentLine = textBeforeCursor.split('\n').pop() || '';
       
-      const currentIndent = currentLine.match(/^\s*/)?.[0] || '';
+      const currentIndent = LEADING_WHITESPACE_REGEX.exec(currentLine)?.[0] || '';
       const trimmedLine = currentLine.trimEnd();
 
       // Check if pressing Enter between { and }
@@ -205,7 +258,10 @@ export function CodeInput({
       }
 
       // Check if opening brace ends line
-      const extraIndent = trimmedLine.endsWith('{') || trimmedLine.endsWith('(') ? tabSpaces : '';
+      let extraIndent = '';
+      if (trimmedLine.endsWith('{') || trimmedLine.endsWith('(')) {
+        extraIndent = tabSpaces;
+      }
       const newIndent = currentIndent + extraIndent;
 
       const nextVal = textBeforeCursor + '\n' + newIndent + textAfterCursor;
@@ -321,13 +377,7 @@ export function CodeInput({
         </label>
         
         <span 
-          className={`text-xs font-mono transition-colors ${
-            isAtLimit 
-              ? 'text-red-400 font-semibold' 
-              : isNearLimit 
-              ? 'text-yellow-400' 
-              : isDark ? 'text-zinc-500' : 'text-slate-400'
-          }`}
+          className={`text-xs font-mono transition-colors ${getCharCountColorClass(isAtLimit, isNearLimit, isDark)}`}
         >
           {currentLength.toLocaleString('pt-BR')} / {maxLength.toLocaleString('pt-BR')} caracteres
         </span>
@@ -336,23 +386,21 @@ export function CodeInput({
       {/* Backdrop for Expanded Modal Mode */}
       {isExpanded && (
         <div 
-          className="fixed inset-0 bg-black/80 backdrop-blur-md z-40 animate-in fade-in duration-300 ease-out"
+          role="button"
+          tabIndex={-1}
+          aria-label="Fechar tela cheia"
+          className="fixed inset-0 bg-black/80 backdrop-blur-md z-40 animate-in fade-in duration-300 ease-out cursor-pointer"
           onClick={() => setIsExpanded(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              setIsExpanded(false);
+            }
+          }}
         />
       )}
 
       {/* Single Editor Container (Animates smoothly expanding into full screen) */}
-      <div 
-        className={`w-full rounded-xl overflow-hidden border flex flex-col ${
-          isExpanded 
-            ? 'fixed inset-3 sm:inset-6 md:inset-10 z-50 max-w-6xl mx-auto shadow-2xl shadow-black/90 animate-editor-expand' 
-            : 'relative min-h-[380px] h-[380px] shadow-lg'
-        } ${
-          isDark 
-            ? 'border-zinc-800 bg-zinc-950 shadow-black/60' 
-            : 'border-slate-300 bg-white shadow-slate-200/60'
-        }`}
-      >
+      <div className={getEditorContainerClasses(isExpanded, isDark)}>
         {/* Editor Toolbar */}
         <div 
           className={`px-4 py-3 shrink-0 flex flex-wrap items-center justify-between gap-2 border-b transition-colors select-none ${
@@ -376,17 +424,17 @@ export function CodeInput({
                   : 'bg-white text-slate-700 border border-slate-200'
               }`}
             >
-              <Coffee className="w-3.5 h-3.5 text-amber-400" />
+              <FileCode className="w-3.5 h-3.5 text-amber-500" />
               App.java
             </span>
 
-            {/* Quick Actions (Clear, Copy) */}
-            {value && (
-              <div className="flex items-center gap-1.5 ml-1">
+            {/* Quick Actions (Copy, Restore, Clear) */}
+            <div className="flex items-center gap-1.5 ml-1 flex-wrap">
+              {value && (
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs transition-colors ${
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs cursor-pointer transition-colors ${
                     isDark
                       ? 'text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700'
                       : 'text-slate-700 hover:text-slate-900 bg-slate-200 hover:bg-slate-300'
@@ -396,11 +444,30 @@ export function CodeInput({
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copied ? 'Copiado!' : 'Copiar'}</span>
                 </button>
+              )}
 
+              {onReset && (
+                <button
+                  type="button"
+                  onClick={onReset}
+                  disabled={disabled}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs cursor-pointer transition-colors ${
+                    isDark
+                      ? 'text-amber-300 hover:text-amber-200 bg-amber-950/40 hover:bg-amber-950/70 border border-amber-900/40'
+                      : 'text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200'
+                  }`}
+                  title="Recarregar o código inicial do exercício"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Restaurar Código</span>
+                </button>
+              )}
+
+              {value && (
                 <button
                   type="button"
                   onClick={handleClear}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs transition-colors ${
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs cursor-pointer transition-colors ${
                     isDark
                       ? 'text-red-400 hover:text-red-300 bg-red-950/30 hover:bg-red-950/60 border border-red-900/40'
                       : 'text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200'
@@ -410,8 +477,8 @@ export function CodeInput({
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Limpar</span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Right: Actions (Theme Toggle & Expand / Close Button) */}
@@ -427,7 +494,7 @@ export function CodeInput({
               <button
                 type="button"
                 onClick={() => onToggleTheme('dark')}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md cursor-pointer transition-all ${
                   isDark 
                     ? 'bg-zinc-800 text-zinc-100 font-semibold shadow-sm border border-zinc-700' 
                     : 'text-slate-500 hover:text-slate-800'
@@ -441,7 +508,7 @@ export function CodeInput({
               <button
                 type="button"
                 onClick={() => onToggleTheme('light')}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md cursor-pointer transition-all ${
                   !isDark 
                     ? 'bg-amber-500 text-white font-semibold shadow-sm' 
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -457,15 +524,7 @@ export function CodeInput({
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className={`p-1.5 rounded-lg border transition-colors ${
-                isDark 
-                  ? isExpanded 
-                    ? 'bg-red-950/40 border-red-800/60 text-red-300 hover:bg-red-900/50' 
-                    : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100' 
-                  : isExpanded 
-                    ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100' 
-                    : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900'
-              }`}
+              className={getExpandButtonClasses(isExpanded, isDark)}
               title={isExpanded ? 'Fechar tela cheia (ESC)' : 'Expandir editor em tela cheia'}
               aria-label={isExpanded ? 'Fechar tela cheia' : 'Expandir editor em tela cheia'}
             >

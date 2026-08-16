@@ -1,12 +1,12 @@
-import { Coffee, Moon, Sun } from 'lucide-react';
+import { Code2, Moon, Sun } from 'lucide-react';
 import { AppTheme } from '@/types';
 
 interface HeaderProps {
-  theme: AppTheme;
-  onToggleTheme: (theme: AppTheme) => void;
+  readonly theme: AppTheme;
+  readonly onToggleTheme: (theme: AppTheme) => void;
 }
 
-export function Header({ theme, onToggleTheme }: HeaderProps) {
+export function Header({ theme, onToggleTheme }: Readonly<HeaderProps>) {
   const isDark = theme === 'dark';
 
   return (
@@ -17,14 +17,23 @@ export function Header({ theme, onToggleTheme }: HeaderProps) {
           : 'bg-white border-slate-200 shadow-sm'
       }`}
     >
-      <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-xl ${isDark ? 'bg-zinc-800' : 'bg-amber-50'}`}>
-            <Coffee className="w-6 h-6 text-amber-400" />
+      <div className="max-w-4xl mx-auto px-4 py-5 flex items-center justify-between">
+        {/* Brand Logo & Title with Gradient Animation */}
+        <div className="flex items-center gap-3 select-none group cursor-default">
+          {/* Símbolo de Código </> com micro-interação */}
+          <div className={`p-2.5 rounded-xl border flex items-center justify-center transition-all duration-300 group-hover:scale-105 ${
+            isDark 
+              ? 'bg-zinc-950 border-zinc-800 text-emerald-400 shadow-inner group-hover:border-emerald-500/40' 
+              : 'bg-emerald-50 border-emerald-200 text-emerald-600 shadow-xs group-hover:border-emerald-300'
+          }`}>
+            <Code2 className="w-5 h-5 transition-transform duration-300 group-hover:rotate-6" />
           </div>
           <div>
             <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
-              Java Clean Code <span className="text-amber-400">Analyzer</span>
+              Clean Code{' '}
+              <span className="bg-gradient-to-r from-emerald-500 via-teal-400 via-amber-400 to-emerald-500 dark:from-emerald-400 dark:via-teal-300 dark:via-amber-300 dark:to-emerald-400 bg-clip-text text-transparent animate-title-gradient font-black">
+                Analyzer
+              </span>
             </h1>
           </div>
         </div>
@@ -40,12 +49,13 @@ export function Header({ theme, onToggleTheme }: HeaderProps) {
           <button
             type="button"
             onClick={() => onToggleTheme('dark')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer transition-all ${
               isDark 
                 ? 'bg-zinc-800 text-zinc-100 font-semibold shadow-sm border border-zinc-700' 
                 : 'text-slate-500 hover:text-slate-800'
             }`}
             title="Tema Escuro"
+            aria-label="Ativar tema escuro"
           >
             <Moon className="w-3.5 h-3.5 text-amber-400" />
             <span className="hidden sm:inline">Escuro</span>
@@ -54,12 +64,13 @@ export function Header({ theme, onToggleTheme }: HeaderProps) {
           <button
             type="button"
             onClick={() => onToggleTheme('light')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer transition-all ${
               !isDark 
                 ? 'bg-white text-amber-600 font-semibold shadow-sm border border-slate-200' 
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
             title="Tema Claro"
+            aria-label="Ativar tema claro"
           >
             <Sun className="w-3.5 h-3.5 text-amber-500" />
             <span className="hidden sm:inline">Claro</span>

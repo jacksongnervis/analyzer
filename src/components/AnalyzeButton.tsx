@@ -2,14 +2,14 @@ import { Loader2, Sparkles } from 'lucide-react';
 import { AppTheme } from '@/types';
 
 interface AnalyzeButtonProps {
-  onClick: () => void;
-  disabled: boolean;
-  state: 'idle' | 'loading' | 'retrying' | 'success' | 'error';
-  theme: AppTheme;
-  retrySeconds?: number;
+  readonly onClick: () => void;
+  readonly disabled: boolean;
+  readonly state: 'idle' | 'loading' | 'retrying' | 'success' | 'error';
+  readonly theme: AppTheme;
+  readonly retrySeconds?: number;
 }
 
-export function AnalyzeButton({ onClick, disabled, state, theme, retrySeconds }: AnalyzeButtonProps) {
+export function AnalyzeButton({ onClick, disabled, state, theme, retrySeconds }: Readonly<AnalyzeButtonProps>) {
   const isDark = theme === 'dark';
   const isBusy = state === 'loading' || state === 'retrying';
 
@@ -21,12 +21,13 @@ export function AnalyzeButton({ onClick, disabled, state, theme, retrySeconds }:
     }
 
     return isDark
-      ? 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/10 active:scale-[0.99] font-bold'
-      : 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/25 active:scale-[0.99] font-semibold';
+      ? 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/10 active:scale-[0.99] font-bold cursor-pointer'
+      : 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/25 active:scale-[0.99] font-semibold cursor-pointer';
   };
 
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled || isBusy}
       className={`

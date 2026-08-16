@@ -15,30 +15,25 @@ interface AnalysisRequestOptions {
 export function getGroqApiKeys(): string[] {
   const keys: string[] = [];
 
-  // 1. Lista separada por vírgula
-  if (process.env.GROQ_API_KEYS) {
-    const splitKeys = process.env.GROQ_API_KEYS.split(',')
+  const rawEnvValues = [
+    process.env.GROQ_API_KEYS,
+    process.env.GROQ_API_KEY,
+    process.env.GROQ_API_KEY_2,
+    process.env.GROQ_API_KEY_3,
+    process.env.GROQ_API_KEY_4,
+    process.env.GROQ_API_KEY_BACKUP,
+  ];
+
+  for (const raw of rawEnvValues) {
+    if (!raw) continue;
+    // Divide por vírgula, ponto-e-vírgula ou quebra de linha caso haja mais de uma chave na mesma variável
+    const splitKeys = raw.split(/[,;\n]/)
       .map(k => k.replace(/["']/g, '').trim())
       .filter(k => k.length > 0);
-    keys.push(...splitKeys);
-  }
 
-  // 2. Chave primária padrão
-  if (process.env.GROQ_API_KEY) {
-    const cleanKey = process.env.GROQ_API_KEY.replace(/["']/g, '').trim();
-    if (cleanKey && !keys.includes(cleanKey)) {
-      keys.push(cleanKey);
-    }
-  }
-
-  // 3. Chaves nomeadas adicionais (GROQ_API_KEY_2, GROQ_API_KEY_3, GROQ_API_KEY_BACKUP)
-  const additionalEnvNames = ['GROQ_API_KEY_2', 'GROQ_API_KEY_3', 'GROQ_API_KEY_BACKUP'];
-  for (const envName of additionalEnvNames) {
-    const envVal = process.env[envName];
-    if (envVal) {
-      const cleanKey = envVal.replace(/["']/g, '').trim();
-      if (cleanKey && !keys.includes(cleanKey)) {
-        keys.push(cleanKey);
+    for (const key of splitKeys) {
+      if (!keys.includes(key)) {
+        keys.push(key);
       }
     }
   }

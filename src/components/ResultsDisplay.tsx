@@ -6,11 +6,11 @@ import { AlertTriangle, CheckCircle2, Lightbulb, XCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface ResultsDisplayProps {
-  result: AnalysisResult;
-  theme: AppTheme;
+  readonly result: AnalysisResult;
+  readonly theme: AppTheme;
 }
 
-export function ResultsDisplay({ result, theme }: ResultsDisplayProps) {
+export function ResultsDisplay({ result, theme }: Readonly<ResultsDisplayProps>) {
   const isDark = theme === 'dark';
   const score = result.pontuacao;
 

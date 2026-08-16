@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Header } from '@/components/Header';
 import { CodeInput } from '@/components/CodeInput';
 import { AnalyzeButton } from '@/components/AnalyzeButton';
@@ -10,6 +10,108 @@ import { AnalysisResult, ApplicationState, AppTheme, Exercise } from '@/types';
 import { AlertCircle } from 'lucide-react';
 import { sanitizeCode } from '@/lib/sanitizer';
 import { checkJavaHeuristics } from '@/lib/heuristics';
+
+const STORAGE_KEYS = {
+  THEME: 'clean_code_analyzer_theme',
+  SELECTED_EXERCISE: 'clean_code_analyzer_selected_exercise_id',
+  DRAFT_PREFIX: 'clean_code_analyzer_draft_',
+};
+
+const MIN_CODE_LENGTH = 10;
+const MAX_CODE_LENGTH = 5000;
+const MAX_RETRIES = 2;
+const BASE_RETRY_DELAY_MS = 2000;
+
+interface CodeValidationResult {
+  readonly isValid: boolean;
+  readonly sanitizedCode: string;
+  readonly errorMessage?: string;
+}
+
+function validateJavaInput(code: string): CodeValidationResult {
+  const sanitizedCode = sanitizeCode(code);
+
+  if (!sanitizedCode) {
+    return { isValid: false, sanitizedCode: '', errorMessage: 'Por favor, insira o código Java que deseja analisar.' };
+  }
+
+  if (sanitizedCode.length < MIN_CODE_LENGTH) {
+    return {
+      isValid: false,
+      sanitizedCode,
+      errorMessage: `O código precisa ter pelo menos ${MIN_CODE_LENGTH} caracteres para ser analisado.`,
+    };
+  }
+
+  if (sanitizedCode.length > MAX_CODE_LENGTH) {
+    return {
+      isValid: false,
+      sanitizedCode,
+      errorMessage: `O código ultrapassou o limite máximo de ${MAX_CODE_LENGTH.toLocaleString('pt-BR')} caracteres.`,
+    };
+  }
+
+  const heuristic = checkJavaHeuristics(sanitizedCode);
+  if (!heuristic.isValid) {
+    return {
+      isValid: false,
+      sanitizedCode,
+      errorMessage: heuristic.reason || 'O código fornecido não parece ser Java válido.',
+    };
+  }
+
+  return { isValid: true, sanitizedCode };
+}
+
+async function runRetryCountdown(
+  seconds: number,
+  onTick: (remainingSeconds: number) => void
+): Promise<void> {
+  for (let i = seconds; i > 0; i--) {
+    onTick(i);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+}
+
+interface FetchAnalysisAttemptResult {
+  readonly status: 'success' | 'client_error' | 'rate_limit' | 'server_error';
+  readonly data?: AnalysisResult;
+  readonly error?: string;
+}
+
+async function requestAnalysis(code: string, exerciseId: string | null): Promise<FetchAnalysisAttemptResult> {
+  try {
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code,
+        exerciseId: exerciseId || undefined,
+      }),
+    });
+
+    if (response.ok) {
+      const data: AnalysisResult = await response.json();
+      return { status: 'success', data };
+    }
+
+    const errorData = await response.json().catch(() => ({}));
+    const message = errorData.error;
+
+    if (response.status === 429) {
+      return { status: 'rate_limit', error: message || 'Limite de requisições excedido. Aguarde alguns instantes e tente novamente.' };
+    }
+
+    if (response.status >= 400 && response.status < 500) {
+      return { status: 'client_error', error: message || 'Não foi possível analisar o código fornecido.' };
+    }
+
+    return { status: 'server_error', error: message || 'Erro ao processar a análise no servidor.' };
+  } catch (error: unknown) {
+    const errMessage = error instanceof Error ? error.message : 'Ocorreu um erro ao tentar se conectar ao servidor.';
+    return { status: 'server_error', error: errMessage };
+  }
+}
 
 export default function Home() {
   const [theme, setTheme] = useState<AppTheme>('dark');
@@ -24,13 +126,41 @@ export default function Home() {
   const isSubmittingRef = useRef<boolean>(false);
   const isDark = theme === 'dark';
 
-  // Busca exercícios públicos do servidor na inicialização
+  // 1. Carrega tema salvo e exercícios públicos com restauração do último rascunho
   useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) as AppTheme | null;
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        setTheme(savedTheme);
+      }
+    } catch {
+      // Ignora erro de acesso ao localStorage
+    }
+
     fetch('/api/exercises')
       .then((res) => res.json())
-      .then((data) => {
+      .then((data: Exercise[]) => {
         if (Array.isArray(data)) {
           setExercises(data);
+
+          try {
+            const savedExId = localStorage.getItem(STORAGE_KEYS.SELECTED_EXERCISE);
+            const targetExercise = savedExId ? data.find((ex) => ex.id === savedExId) : null;
+
+            if (targetExercise) {
+              setSelectedExerciseId(targetExercise.id);
+              const savedDraft = localStorage.getItem(STORAGE_KEYS.DRAFT_PREFIX + targetExercise.id);
+              setCode(savedDraft ?? targetExercise.initialCode);
+            } else {
+              setSelectedExerciseId(null);
+              const freeDraft = localStorage.getItem(STORAGE_KEYS.DRAFT_PREFIX + 'free');
+              if (freeDraft !== null) {
+                setCode(freeDraft);
+              }
+            }
+          } catch {
+            // Ignora erro de acesso ao localStorage
+          }
         }
       })
       .catch((err) => {
@@ -38,24 +168,57 @@ export default function Home() {
       });
   }, []);
 
-  // Lógica de atraso (sleep)
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  const handleToggleTheme = (newTheme: AppTheme) => {
+    setTheme(newTheme);
+    try {
+      localStorage.setItem(STORAGE_KEYS.THEME, newTheme);
+    } catch {
+      // Ignora erro
+    }
+  };
 
-  const minLength = 10;
-  const maxLength = 5000;
+  const handleCodeChange = useCallback((newCode: string) => {
+    setCode(newCode);
+    if (appState === 'error') {
+      setAppState('idle');
+      setErrorMessage('');
+    }
+
+    try {
+      const draftKey = selectedExerciseId 
+        ? `${STORAGE_KEYS.DRAFT_PREFIX}${selectedExerciseId}` 
+        : `${STORAGE_KEYS.DRAFT_PREFIX}free`;
+      localStorage.setItem(draftKey, newCode);
+    } catch {
+      // Ignora erro
+    }
+  }, [selectedExerciseId, appState]);
+
   const trimmedCode = code.trim();
-  const isTooShort = trimmedCode.length > 0 && trimmedCode.length < minLength;
-  const isTooLong = code.length > maxLength;
+  const isTooShort = trimmedCode.length > 0 && trimmedCode.length < MIN_CODE_LENGTH;
+  const isTooLong = code.length > MAX_CODE_LENGTH;
 
   const handleSelectExercise = (exercise: Exercise | null) => {
     if (appState === 'loading' || appState === 'retrying') return;
 
     if (exercise) {
       setSelectedExerciseId(exercise.id);
-      setCode(exercise.initialCode);
+      try {
+        localStorage.setItem(STORAGE_KEYS.SELECTED_EXERCISE, exercise.id);
+        const savedDraft = localStorage.getItem(`${STORAGE_KEYS.DRAFT_PREFIX}${exercise.id}`);
+        setCode(savedDraft ?? exercise.initialCode);
+      } catch {
+        setCode(exercise.initialCode);
+      }
     } else {
       setSelectedExerciseId(null);
-      setCode('');
+      try {
+        localStorage.removeItem(STORAGE_KEYS.SELECTED_EXERCISE);
+        const freeDraft = localStorage.getItem(`${STORAGE_KEYS.DRAFT_PREFIX}free`);
+        setCode(freeDraft ?? '');
+      } catch {
+        setCode('');
+      }
     }
 
     setResult(null);
@@ -68,6 +231,11 @@ export default function Home() {
     const exercise = exercises.find((ex) => ex.id === selectedExerciseId);
     if (exercise) {
       setCode(exercise.initialCode);
+      try {
+        localStorage.setItem(`${STORAGE_KEYS.DRAFT_PREFIX}${exercise.id}`, exercise.initialCode);
+      } catch {
+        // Ignora erro
+      }
       setResult(null);
       setAppState('idle');
       setErrorMessage('');
@@ -75,130 +243,40 @@ export default function Home() {
   };
 
   const handleAnalyze = async () => {
-    // Trava síncrona contra múltiplos cliques rápidos / race conditions
     if (isSubmittingRef.current) return;
-    
-    // 1. Sanitização e verificação prévia no cliente (ANTES de qualquer requisição)
-    const sanitizedCode = sanitizeCode(code);
 
-    if (!sanitizedCode) {
-      setErrorMessage('Por favor, insira o código Java que deseja analisar.');
+    const validation = validateJavaInput(code);
+    if (!validation.isValid) {
+      setErrorMessage(validation.errorMessage || 'Por favor, insira código Java válido.');
       setAppState('error');
       return;
     }
 
-    if (sanitizedCode.length < minLength) {
-      setErrorMessage(`O código precisa ter pelo menos ${minLength} caracteres para ser analisado.`);
-      setAppState('error');
-      return;
-    }
-
-    if (sanitizedCode.length > maxLength) {
-      setErrorMessage(`O código ultrapassou o limite máximo de ${maxLength.toLocaleString('pt-BR')} caracteres.`);
-      setAppState('error');
-      return;
-    }
-
-    // 2. Validação heurística de Java localmente antes de disparar o fetch
-    const heuristic = checkJavaHeuristics(sanitizedCode);
-    if (!heuristic.isValid) {
-      setErrorMessage(heuristic.reason || 'O código fornecido não parece ser Java válido.');
-      setAppState('error');
-      return;
-    }
-
-    // 3. Inicia o envio para a API
     isSubmittingRef.current = true;
     setAppState('loading');
     setErrorMessage('');
     setResult(null);
 
-    let attempt = 0;
-    const maxRetries = 2;
-    const baseDelayMs = 2000;
-
     try {
-      while (attempt <= maxRetries) {
-        try {
-          const response = await fetch('/api/analyze', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              code: sanitizedCode,
-              exerciseId: selectedExerciseId || undefined,
-            }),
-          });
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        const response = await requestAnalysis(validation.sanitizedCode, selectedExerciseId);
 
-          if (response.ok) {
-            const data: AnalysisResult = await response.json();
-            setResult(data);
-            setAppState('success');
-            return;
-          }
-
-          // Se for erro do cliente (ex: 400 Bad Request), exibe imediatamente sem retentativa
-          if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-            const errorData = await response.json().catch(() => ({}));
-            setErrorMessage(errorData.error || 'Não foi possível analisar o código fornecido.');
-            setAppState('error');
-            return;
-          }
-
-          // Se for 429 Too Many Requests (Rate Limit), aplica retry com backoff apenas se houver tentativas
-          if (response.status === 429) {
-            const errorData = await response.json().catch(() => ({}));
-            if (attempt >= maxRetries) {
-              setErrorMessage(errorData.error || 'Limite de requisições excedido. Aguarde alguns instantes e tente novamente.');
-              setAppState('error');
-              return;
-            }
-
-            attempt++;
-            const currentDelayMs = baseDelayMs * Math.pow(2, attempt - 1);
-            const currentDelaySec = currentDelayMs / 1000;
-
-            setAppState('retrying');
-            setRetryCountdown(currentDelaySec);
-
-            for (let i = currentDelaySec; i > 0; i--) {
-              setRetryCountdown(i);
-              await delay(1000);
-            }
-
-            setAppState('loading');
-            continue;
-          }
-
-          // Para 500 ou outros erros inesperados do servidor
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Erro ao processar a análise no servidor.');
-
-        } catch (error: unknown) {
-          const errMessage = error instanceof Error ? error.message : 'Ocorreu um erro ao tentar se conectar ao servidor.';
-
-          // Se for a última tentativa, finaliza com erro
-          if (attempt >= maxRetries) {
-            setErrorMessage(errMessage);
-            setAppState('error');
-            return;
-          }
-
-          attempt++;
-          const currentDelayMs = baseDelayMs * Math.pow(2, attempt - 1);
-          const currentDelaySec = currentDelayMs / 1000;
-
-          setAppState('retrying');
-          setRetryCountdown(currentDelaySec);
-
-          for (let i = currentDelaySec; i > 0; i--) {
-            setRetryCountdown(i);
-            await delay(1000);
-          }
-
-          setAppState('loading');
+        if (response.status === 'success' && response.data) {
+          setResult(response.data);
+          setAppState('success');
+          return;
         }
+
+        if (response.status === 'client_error' || attempt >= MAX_RETRIES) {
+          setErrorMessage(response.error || 'Erro ao processar a análise no servidor.');
+          setAppState('error');
+          return;
+        }
+
+        const delaySec = (BASE_RETRY_DELAY_MS * Math.pow(2, attempt)) / 1000;
+        setAppState('retrying');
+        await runRetryCountdown(delaySec, setRetryCountdown);
+        setAppState('loading');
       }
     } finally {
       isSubmittingRef.current = false;
@@ -213,7 +291,7 @@ export default function Home() {
           : 'bg-slate-50 text-slate-900 selection:bg-amber-500/30'
       }`}
     >
-      <Header theme={theme} onToggleTheme={setTheme} />
+      <Header theme={theme} onToggleTheme={handleToggleTheme} />
       
       <main className="max-w-4xl mx-auto px-4 py-10 flex flex-col gap-8">
         
@@ -240,29 +318,23 @@ export default function Home() {
             exercises={exercises}
             selectedExerciseId={selectedExerciseId}
             onSelectExercise={handleSelectExercise}
-            onResetExerciseCode={handleResetExerciseCode}
             theme={theme}
             disabled={appState === 'loading' || appState === 'retrying'}
           />
 
           <CodeInput 
             value={code}
-            onChange={(val) => {
-              setCode(val);
-              if (appState === 'error') {
-                setAppState('idle');
-                setErrorMessage('');
-              }
-            }}
+            onChange={handleCodeChange}
             disabled={appState === 'loading' || appState === 'retrying'}
             theme={theme}
-            onToggleTheme={setTheme}
-            maxLength={maxLength}
+            onToggleTheme={handleToggleTheme}
+            onReset={selectedExerciseId ? handleResetExerciseCode : undefined}
+            maxLength={MAX_CODE_LENGTH}
           />
 
           {isTooShort && (
             <p className="text-xs text-amber-500 font-medium">
-              ⚠️ O código deve conter no mínimo {minLength} caracteres para ser analisado.
+              ⚠️ O código deve conter no mínimo {MIN_CODE_LENGTH} caracteres para ser analisado.
             </p>
           )}
           

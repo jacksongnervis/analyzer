@@ -8,15 +8,16 @@ export type ApplicationState = 'idle' | 'loading' | 'retrying' | 'success' | 'er
 
 export type AppTheme = 'dark' | 'light';
 
+export type ExerciseDifficulty = 'Iniciante' | 'Intermediário' | 'Avançado' | 'Desafio';
+
 /**
  * Informações públicas do exercício enviadas ao navegador do aluno.
- * NÃO contém a solução corrigida (expectedCleanCode) para evitar vazamento via F12.
  */
 export interface PublicExercise {
   id: string;
   title: string;
   category: string;
-  difficulty: 'Iniciante' | 'Intermediário' | 'Avançado';
+  difficulty: ExerciseDifficulty;
   description: string;
   objectives: string[];
   initialCode: string;

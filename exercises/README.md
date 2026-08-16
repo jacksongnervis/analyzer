@@ -29,7 +29,7 @@ Contém o título, categoria, dificuldade e lista de objetivos:
 }
 ```
 
-*Dificuldades aceitas*: `"Iniciante"`, `"Intermediário"`, `"Avançado"`.
+*Dificuldades aceitas*: `"Iniciante"`, `"Intermediário"`, `"Avançado"`, `"Desafio"`.
 
 ---
 
