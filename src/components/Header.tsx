@@ -18,20 +18,26 @@ export function Header({ theme, onToggleTheme }: Readonly<HeaderProps>) {
       }`}
     >
       <div className="max-w-4xl mx-auto px-4 py-5 flex items-center justify-between">
-        {/* Brand Logo & Title with Gradient Animation */}
+        {/* Brand Logo & Title with Gradient Animation and Hover Glow Shift */}
         <div className="flex items-center gap-3 select-none group cursor-default">
           {/* Símbolo de Código </> com micro-interação */}
           <div className={`p-2.5 rounded-xl border flex items-center justify-center transition-all duration-300 group-hover:scale-105 ${
             isDark 
-              ? 'bg-zinc-950 border-zinc-800 text-emerald-400 shadow-inner group-hover:border-emerald-500/40' 
-              : 'bg-emerald-50 border-emerald-200 text-emerald-600 shadow-xs group-hover:border-emerald-300'
+              ? 'bg-zinc-950 border-zinc-800 text-emerald-400 shadow-inner group-hover:border-emerald-500/50 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
+              : 'bg-emerald-50 border-emerald-200 text-emerald-600 shadow-xs group-hover:border-emerald-400 group-hover:shadow-[0_0_12px_rgba(16,185,129,0.25)]'
           }`}>
             <Code2 className="w-5 h-5 transition-transform duration-300 group-hover:rotate-6" />
           </div>
           <div>
-            <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
-              Clean Code{' '}
-              <span className="bg-gradient-to-r from-emerald-500 via-teal-400 via-amber-400 to-emerald-500 dark:from-emerald-400 dark:via-teal-300 dark:via-amber-300 dark:to-emerald-400 bg-clip-text text-transparent animate-title-gradient font-black">
+            <h1 className="text-2xl font-bold tracking-tight transition-all duration-300">
+              <span className={`transition-colors duration-300 ${
+                isDark 
+                  ? 'text-zinc-100 group-hover:text-emerald-200' 
+                  : 'text-slate-900 group-hover:text-emerald-800'
+              }`}>
+                Clean Code
+              </span>{' '}
+              <span className="bg-gradient-to-r from-emerald-500 via-teal-400 via-amber-400 to-emerald-500 dark:from-emerald-400 dark:via-teal-300 dark:via-amber-300 dark:to-emerald-400 bg-clip-text text-transparent animate-title-gradient font-black transition-all duration-300 group-hover:drop-shadow-[0_0_14px_rgba(52,211,153,0.4)]">
                 Analyzer
               </span>
             </h1>

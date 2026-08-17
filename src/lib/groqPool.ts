@@ -62,7 +62,6 @@ const MODEL_NAME = 'openai/gpt-oss-120b';
 
 /**
  * Executa a chamada à IA com Load Balancer Round-Robin e Failover automático entre chaves da API.
- * Utiliza estritamente o modelo oficial LLaMA 3.3 70B Versatile.
  */
 export async function runLoadBalancedAnalysis({
   systemPrompt,
@@ -86,7 +85,7 @@ export async function runLoadBalancedAnalysis({
 
   let lastError: unknown = null;
 
-  // 2. Tenta executar no modelo llama-3.3-70b-versatile com as chaves disponíveis no pool
+  // 2. Tenta executar no modelo com as chaves disponíveis no pool
   for (let i = 0; i < orderedKeys.length; i++) {
     const apiKey = orderedKeys[i];
     const client = getGroqClient(apiKey);
@@ -112,7 +111,7 @@ export async function runLoadBalancedAnalysis({
         (err instanceof Error && err.message.includes('429'));
 
       console.warn(`[Groq Load Balancer] Chave ${i + 1}/${orderedKeys.length} falhou (${isRateLimit ? 'Rate Limit 429' : 'Erro'}), acionando failover para a próxima chave...`);
-      
+
       // Se houver mais chaves no pool, tenta a próxima chave imediatamente
       if (i < orderedKeys.length - 1) {
         continue;

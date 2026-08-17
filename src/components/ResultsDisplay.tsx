@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { AnalysisResult, AppTheme } from '../types';
-import { AlertTriangle, CheckCircle2, Lightbulb, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Lightbulb, XCircle, Info } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface ResultsDisplayProps {
@@ -26,57 +26,67 @@ export function ResultsDisplay({ result, theme }: Readonly<ResultsDisplayProps>)
     }
   }, [score]);
 
-  const getScoreColor = (score: number) => {
+  const getScoreTextColor = () => {
     if (score >= 8) return 'text-emerald-500';
     if (score >= 5) return 'text-amber-500';
     return 'text-rose-500';
   };
 
-  const getScoreIcon = (score: number) => {
-    if (score >= 8) return <CheckCircle2 className="w-8 h-8 text-emerald-500" />;
-    if (score >= 5) return <AlertTriangle className="w-8 h-8 text-amber-500" />;
-    return <XCircle className="w-8 h-8 text-rose-500" />;
+  const getScoreBadge = () => {
+    if (score >= 8) return { text: 'Código Limpo', icon: CheckCircle2 };
+    if (score >= 5) return { text: 'Precisa de Melhorias', icon: AlertTriangle };
+    return { text: 'Refatoração Urgente', icon: XCircle };
   };
 
+  const badge = getScoreBadge();
+  const BadgeIcon = badge.icon;
+  const scoreColor = getScoreTextColor();
+
   return (
-    <div className="w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Score Section */}
-      <div
-        className={`rounded-2xl p-6 flex items-center justify-between border transition-colors ${
-          isDark
-            ? 'bg-zinc-900 border-zinc-800'
-            : 'bg-white border-slate-200 shadow-md shadow-slate-200/50'
+    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
+      {/* Score Header (Padrão Original) */}
+      <div 
+        className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 rounded-2xl border gap-4 transition-colors ${
+          isDark 
+            ? 'bg-zinc-900 border-zinc-800 shadow-xl shadow-black/40' 
+            : 'bg-white border-slate-200 shadow-xl shadow-slate-200/60'
         }`}
       >
         <div>
-          <h2 className={`text-xl font-bold ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
+          <h2 className={`text-xl font-bold tracking-tight ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
             Nota de Clean Code
           </h2>
-          <p className={`text-sm mt-1 ${isDark ? 'text-zinc-400' : 'text-slate-500'}`}>
+          <p className={`text-xs mt-0.5 ${isDark ? 'text-zinc-400' : 'text-slate-500'}`}>
             Baseado na legibilidade, manutenibilidade e convenções Java
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          {getScoreIcon(result.pontuacao)}
-          <span className={`text-4xl font-extrabold ${getScoreColor(result.pontuacao)}`}>
-            {result.pontuacao}
-            <span className={`text-xl font-medium ${isDark ? 'text-zinc-500' : 'text-slate-400'}`}>/10</span>
-          </span>
+
+        <div className="flex items-center gap-2.5 self-end sm:self-auto select-none">
+          <BadgeIcon className={`w-7 h-7 ${scoreColor}`} />
+          <div className="flex items-baseline">
+            <span className={`text-3xl font-black tracking-tight ${scoreColor}`}>
+              {score}
+            </span>
+            <span className={`text-base font-semibold ml-0.5 ${isDark ? 'text-zinc-500' : 'text-slate-400'}`}>
+              /10
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Main Tip */}
-      <div
-        className={`rounded-2xl p-6 flex gap-4 border transition-colors ${
-          isDark
-            ? 'bg-emerald-950/30 border-emerald-900/50'
-            : 'bg-emerald-50 border-emerald-200 shadow-sm'
+      {/* Dica Principal */}
+      <div 
+        className={`rounded-2xl p-6 border transition-colors ${
+          isDark 
+            ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-300' 
+            : 'bg-emerald-50/80 border-emerald-200/80 text-emerald-900'
         }`}
       >
-        <Lightbulb className="w-6 h-6 shrink-0 text-emerald-400" />
         <div>
-          <h3 className={`font-bold mb-1 ${isDark ? 'text-emerald-400' : 'text-emerald-900'}`}>
-            Dica Principal
+          <h3 className={`text-base font-bold mb-2 flex items-center gap-2 ${isDark ? 'text-emerald-400' : 'text-emerald-800'}`}>
+            <Lightbulb className="w-5 h-5 shrink-0" />
+            <span>Dica Principal do Instrutor</span>
           </h3>
           <p className={`text-sm leading-relaxed ${isDark ? 'text-emerald-100/90' : 'text-emerald-950'}`}>
             {result.dica_principal}
@@ -117,6 +127,14 @@ export function ResultsDisplay({ result, theme }: Readonly<ResultsDisplayProps>)
           </ul>
         )}
       </div>
+
+      {/* Aviso de IA com ícone de Informação */}
+      <p className={`text-center text-xs transition-colors py-1 flex items-center justify-center gap-1.5 select-none ${
+        isDark ? 'text-zinc-500' : 'text-slate-400'
+      }`}>
+        <Info className="w-3.5 h-3.5 shrink-0 opacity-70" />
+        <span>O resultado é gerado por IA e pode cometer erros. Verifique informações importantes.</span>
+      </p>
     </div>
   );
 }
