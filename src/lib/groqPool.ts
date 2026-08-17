@@ -58,7 +58,7 @@ function getGroqClient(apiKey: string): Groq {
   return client;
 }
 
-const MODEL_NAME = 'llama-3.3-70b-versatile';
+const MODEL_NAME = 'openai/gpt-oss-120b';
 
 /**
  * Executa a chamada à IA com Load Balancer Round-Robin e Failover automático entre chaves da API.
