@@ -10,6 +10,7 @@ import { AnalysisResult, ApplicationState, AppTheme, Exercise } from '@/types';
 import { AlertCircle } from 'lucide-react';
 import { sanitizeCode } from '@/lib/sanitizer';
 import { checkJavaHeuristics } from '@/lib/heuristics';
+import { isTooSimilarToInitialCode } from '@/lib/similarity';
 
 const STORAGE_KEYS = {
   THEME: 'clean_code_analyzer_theme',
@@ -30,7 +31,7 @@ interface CodeValidationResult {
   readonly errorMessage?: string;
 }
 
-function validateJavaInput(code: string): CodeValidationResult {
+function validateJavaInput(code: string, initialExerciseCode?: string): CodeValidationResult {
   const sanitizedCode = sanitizeCode(code);
 
   if (!sanitizedCode) {
@@ -59,6 +60,14 @@ function validateJavaInput(code: string): CodeValidationResult {
       isValid: false,
       sanitizedCode,
       errorMessage: heuristic.reason || 'O código fornecido não parece ser Java válido.',
+    };
+  }
+
+  if (initialExerciseCode && isTooSimilarToInitialCode(sanitizedCode, initialExerciseCode)) {
+    return {
+      isValid: false,
+      sanitizedCode,
+      errorMessage: 'O código enviado é praticamente idêntico ao código inicial do exercício. Tente realizar a refatoração antes de solicitar a análise.',
     };
   }
 
@@ -297,7 +306,8 @@ export default function Home() {
   const handleAnalyze = async () => {
     if (isSubmittingRef.current || cooldownSeconds > 0) return;
 
-    const validation = validateJavaInput(code);
+    const currentExercise = selectedExerciseId ? exercises.find((ex) => ex.id === selectedExerciseId) : undefined;
+    const validation = validateJavaInput(code, currentExercise?.initialCode);
     if (!validation.isValid) {
       setErrorMessage(validation.errorMessage || 'Por favor, insira código Java válido.');
       setAppState('error');

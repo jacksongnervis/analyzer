@@ -6,6 +6,7 @@ import { getCodeHash, getCachedAnalysis, setCachedAnalysis } from '@/lib/cache';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { getServerExerciseById } from '@/lib/exercisesServer';
 import { runLoadBalancedAnalysis, getGroqApiKeys } from '@/lib/groqPool';
+import { isTooSimilarToInitialCode } from '@/lib/similarity';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,6 +78,15 @@ export async function POST(request: Request) {
     // 5. Verifica se há contexto de exercício pré-pronto com solução de referência
     const exerciseId = typeof body.exerciseId === 'string' ? body.exerciseId : undefined;
     const exercise = exerciseId ? getServerExerciseById(exerciseId) : undefined;
+
+    if (exercise && isTooSimilarToInitialCode(sanitizedCode, exercise.initialCode)) {
+      return NextResponse.json(
+        {
+          error: 'O código enviado é praticamente idêntico ao código inicial do exercício. Tente realizar a refatoração antes de solicitar a análise.',
+        },
+        { status: 400 }
+      );
+    }
 
     // 6. Cache por Hash SHA-256 (inclui o exerciseId se houver para evitar colisões com modo livre)
     const cacheKey = exercise ? `${sanitizedCode}_ex_${exercise.id}` : sanitizedCode;
