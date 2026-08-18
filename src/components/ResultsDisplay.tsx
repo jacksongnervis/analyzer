@@ -12,7 +12,19 @@ interface ResultsDisplayProps {
 
 export function ResultsDisplay({ result, theme }: Readonly<ResultsDisplayProps>) {
   const isDark = theme === 'dark';
-  const score = result.pontuacao;
+
+  // Validação defensiva local para garantir que nunca ocorram exceções na UI
+  const score = typeof result?.pontuacao === 'number' && !Number.isNaN(result.pontuacao)
+    ? Math.max(0, Math.min(10, Math.round(result.pontuacao)))
+    : 0;
+
+  const problemas = Array.isArray(result?.problemas_encontrados)
+    ? result.problemas_encontrados.filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
+    : [];
+
+  const dica = typeof result?.dica_principal === 'string' && result.dica_principal.trim().length > 0
+    ? result.dica_principal.trim()
+    : 'Continue praticando a refatoração e aplicando os pilares de Clean Code.';
 
   // Dispara chuva de confetes quando a nota for 9 ou 10
   useEffect(() => {
@@ -45,7 +57,7 @@ export function ResultsDisplay({ result, theme }: Readonly<ResultsDisplayProps>)
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* Score Header (Padrão Original) */}
+      {/* Score Header */}
       <div 
         className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 rounded-2xl border gap-4 transition-colors ${
           isDark 
@@ -89,7 +101,7 @@ export function ResultsDisplay({ result, theme }: Readonly<ResultsDisplayProps>)
             <span>Dica Principal do Instrutor</span>
           </h3>
           <p className={`text-sm leading-relaxed ${isDark ? 'text-emerald-100/90' : 'text-emerald-950'}`}>
-            {result.dica_principal}
+            {dica}
           </p>
         </div>
       </div>
@@ -107,13 +119,13 @@ export function ResultsDisplay({ result, theme }: Readonly<ResultsDisplayProps>)
           <span>Problemas Encontrados (Bad Smells)</span>
         </h3>
 
-        {result.problemas_encontrados.length === 0 ? (
+        {problemas.length === 0 ? (
           <p className={`text-sm ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
             Nenhum bad smell significativo encontrado. Excelente trabalho!
           </p>
         ) : (
           <ul className="space-y-3">
-            {result.problemas_encontrados.map((problema, index) => (
+            {problemas.map((problema, index) => (
               <li
                 key={`problem-${index}-${problema.slice(0, 20)}`}
                 className={`flex gap-3 text-sm leading-relaxed ${

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl *)",
+      "Bash(cd c:/Users/Jackson/Desktop/analyzer && (Invoke-WebRequest -Uri \"https://boranatech.com.br/\" -UseBasicParsing).Content |…)",
+      "Bash(cd c:/Users/Jackson/Desktop/analyzer && (Invoke-WebRequest -Uri \"https://boranatech.com.br/assets/index-gNVDka3-.css\" -U…)",
+      "Bash(cd c:/Users/Jackson/Desktop/analyzer && (Invoke-WebRequest -Uri \"https://boranatech.com.br/assets/index-gNVDka3-.css\" -U…)",
+      "Bash($css *)"
+    ]
+  }
+}

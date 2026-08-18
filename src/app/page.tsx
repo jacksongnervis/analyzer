@@ -17,7 +17,23 @@ const STORAGE_KEYS = {
   SELECTED_EXERCISE: 'clean_code_analyzer_selected_exercise_id',
   DRAFT_PREFIX: 'clean_code_analyzer_draft_',
   COOLDOWN: 'clean_code_analyzer_cooldown_until',
+  SESSION_ID: 'clean_code_analyzer_session_id',
 };
+
+function getOrCreateClientSessionId(): string {
+  try {
+    let id = localStorage.getItem(STORAGE_KEYS.SESSION_ID);
+    if (!id || id.length < 8) {
+      id = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem(STORAGE_KEYS.SESSION_ID, id);
+    }
+    return id;
+  } catch {
+    return '';
+  }
+}
 
 const MIN_CODE_LENGTH = 10;
 const MAX_CODE_LENGTH = 5000;
@@ -93,9 +109,15 @@ interface FetchAnalysisAttemptResult {
 
 async function requestAnalysis(code: string, exerciseId: string | null): Promise<FetchAnalysisAttemptResult> {
   try {
+    const sessionId = getOrCreateClientSessionId();
+
     const response = await fetch('/api/analyze', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(sessionId ? { 'x-client-session-id': sessionId } : {}),
+      },
+      credentials: 'same-origin',
       body: JSON.stringify({
         code,
         exerciseId: exerciseId || undefined,
@@ -150,7 +172,7 @@ export default function Home() {
     try {
       const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) as AppTheme | null;
       if (savedTheme === 'light' || savedTheme === 'dark') {
-        setTheme(savedTheme);
+        queueMicrotask(() => setTheme(savedTheme));
       }
 
       // Restaura cooldown ativo mesmo se o usuário der F5
@@ -159,7 +181,7 @@ export default function Home() {
         const until = parseInt(savedCooldownUntil, 10);
         const remaining = Math.ceil((until - Date.now()) / 1000);
         if (remaining > 0) {
-          setCooldownSeconds(remaining);
+          queueMicrotask(() => setCooldownSeconds(remaining));
         } else {
           localStorage.removeItem(STORAGE_KEYS.COOLDOWN);
         }

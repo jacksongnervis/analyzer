@@ -60,8 +60,51 @@ function getGroqClient(apiKey: string): Groq {
 
 const MODEL_NAME = 'openai/gpt-oss-120b';
 
+// Controle de concorrência global (Semáforo FIFO em memória)
+// Garante que rajadas de submissões simultâneas não estourem a taxa da API do Groq
+const MAX_CONCURRENT_REQUESTS = 4;
+const QUEUE_TIMEOUT_MS = 30000; // 30s de timeout máximo na fila de espera
+
+let activeRequestsCount = 0;
+const requestQueue: Array<() => void> = [];
+
+async function acquireConcurrencySlot(): Promise<() => void> {
+  if (activeRequestsCount < MAX_CONCURRENT_REQUESTS) {
+    activeRequestsCount++;
+    return () => releaseConcurrencySlot();
+  }
+
+  return new Promise<() => void>((resolve, reject) => {
+    let timer: NodeJS.Timeout | null = null;
+
+    const proceed = () => {
+      if (timer) clearTimeout(timer);
+      activeRequestsCount++;
+      resolve(() => releaseConcurrencySlot());
+    };
+
+    timer = setTimeout(() => {
+      const idx = requestQueue.indexOf(proceed);
+      if (idx !== -1) {
+        requestQueue.splice(idx, 1);
+      }
+      reject(new Error('Fila de requisições cheia. O tempo limite de espera foi excedido. Tente novamente em instantes.'));
+    }, QUEUE_TIMEOUT_MS);
+
+    requestQueue.push(proceed);
+  });
+}
+
+function releaseConcurrencySlot(): void {
+  activeRequestsCount = Math.max(0, activeRequestsCount - 1);
+  const next = requestQueue.shift();
+  if (next) {
+    next();
+  }
+}
+
 /**
- * Executa a chamada à IA com Load Balancer Round-Robin e Failover automático entre chaves da API.
+ * Executa a chamada à IA com Semáforo de Concorrência, Load Balancer Round-Robin e Failover automático.
  */
 export async function runLoadBalancedAnalysis({
   systemPrompt,
@@ -73,52 +116,58 @@ export async function runLoadBalancedAnalysis({
     throw new Error('Nenhuma chave da API Groq configurada nas variáveis de ambiente.');
   }
 
-  // 1. Seleciona a chave da vez pelo algoritmo Round-Robin
-  const startIndex = currentKeyIndex % keys.length;
-  currentKeyIndex = (currentKeyIndex + 1) % keys.length;
+  // 1. Obtém uma vaga no semáforo de concorrência
+  const releaseSlot = await acquireConcurrencySlot();
 
-  // Organiza a fila de tentativas iniciando pela chave selecionada pelo balanceador
-  const orderedKeys = [
-    ...keys.slice(startIndex),
-    ...keys.slice(0, startIndex),
-  ];
+  try {
+    // 2. Seleciona a chave da vez pelo algoritmo Round-Robin
+    const startIndex = currentKeyIndex % keys.length;
+    currentKeyIndex = (currentKeyIndex + 1) % keys.length;
 
-  let lastError: unknown = null;
+    const orderedKeys = [
+      ...keys.slice(startIndex),
+      ...keys.slice(0, startIndex),
+    ];
 
-  // 2. Tenta executar no modelo com as chaves disponíveis no pool
-  for (let i = 0; i < orderedKeys.length; i++) {
-    const apiKey = orderedKeys[i];
-    const client = getGroqClient(apiKey);
+    let lastError: unknown = null;
 
-    try {
-      const completion = await client.chat.completions.create({
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage },
-        ],
-        model: MODEL_NAME,
-        temperature: 0.1,
-        response_format: { type: 'json_object' },
-      });
+    // 3. Tenta executar no modelo com as chaves disponíveis no pool
+    for (let i = 0; i < orderedKeys.length; i++) {
+      const apiKey = orderedKeys[i];
+      const client = getGroqClient(apiKey);
 
-      const content = completion.choices[0]?.message?.content;
-      if (content) {
-        return content;
-      }
-    } catch (err: unknown) {
-      lastError = err;
-      const isRateLimit = (typeof err === 'object' && err !== null && 'status' in err && (err as { status: number }).status === 429) ||
-        (err instanceof Error && err.message.includes('429'));
+      try {
+        const completion = await client.chat.completions.create({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage },
+          ],
+          model: MODEL_NAME,
+          temperature: 0.1,
+          response_format: { type: 'json_object' },
+        });
 
-      console.warn(`[Groq Load Balancer] Chave ${i + 1}/${orderedKeys.length} falhou (${isRateLimit ? 'Rate Limit 429' : 'Erro'}), acionando failover para a próxima chave...`);
+        const content = completion.choices[0]?.message?.content;
+        if (content) {
+          return content;
+        }
+      } catch (err: unknown) {
+        lastError = err;
+        const isRateLimit = (typeof err === 'object' && err !== null && 'status' in err && (err as { status: number }).status === 429) ||
+          (err instanceof Error && err.message.includes('429'));
 
-      // Se houver mais chaves no pool, tenta a próxima chave imediatamente
-      if (i < orderedKeys.length - 1) {
-        continue;
+        console.warn(`[Groq Load Balancer] Chave ${i + 1}/${orderedKeys.length} falhou (${isRateLimit ? 'Rate Limit 429' : 'Erro'}), acionando failover para a próxima chave...`);
+
+        // Se houver mais chaves no pool, tenta a próxima chave imediatamente
+        if (i < orderedKeys.length - 1) {
+          continue;
+        }
       }
     }
-  }
 
-  // Se todas as chaves falharem, propaga o erro para o tratamento de HTTP da rota
-  throw lastError || new Error('Todas as chaves da API Groq estão temporariamente indisponíveis.');
+    throw lastError || new Error('Todas as chaves da API Groq estão temporariamente indisponíveis.');
+  } finally {
+    // Libera a vaga no semáforo para a próxima requisição na fila
+    releaseSlot();
+  }
 }
