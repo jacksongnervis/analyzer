@@ -15,12 +15,14 @@ const STORAGE_KEYS = {
   THEME: 'clean_code_analyzer_theme',
   SELECTED_EXERCISE: 'clean_code_analyzer_selected_exercise_id',
   DRAFT_PREFIX: 'clean_code_analyzer_draft_',
+  COOLDOWN: 'clean_code_analyzer_cooldown_until',
 };
 
 const MIN_CODE_LENGTH = 10;
 const MAX_CODE_LENGTH = 5000;
 const MAX_RETRIES = 2;
 const BASE_RETRY_DELAY_MS = 2000;
+const SUCCESS_COOLDOWN_SECONDS = 60;
 
 interface CodeValidationResult {
   readonly isValid: boolean;
@@ -77,6 +79,7 @@ interface FetchAnalysisAttemptResult {
   readonly status: 'success' | 'client_error' | 'rate_limit' | 'server_error';
   readonly data?: AnalysisResult;
   readonly error?: string;
+  readonly retryAfterSeconds?: number;
 }
 
 async function requestAnalysis(code: string, exerciseId: string | null): Promise<FetchAnalysisAttemptResult> {
@@ -99,7 +102,13 @@ async function requestAnalysis(code: string, exerciseId: string | null): Promise
     const message = errorData.error;
 
     if (response.status === 429) {
-      return { status: 'rate_limit', error: message || 'Limite de requisições excedido. Aguarde alguns instantes e tente novamente.' };
+      const retryAfterHeader = response.headers.get('Retry-After');
+      const retryAfterSeconds = retryAfterHeader ? parseInt(retryAfterHeader, 10) : 60;
+      return { 
+        status: 'rate_limit', 
+        error: message || 'Limite de requisições excedido. Aguarde alguns instantes e tente novamente.',
+        retryAfterSeconds: isNaN(retryAfterSeconds) ? 60 : retryAfterSeconds,
+      };
     }
 
     if (response.status >= 400 && response.status < 500) {
@@ -122,16 +131,29 @@ export default function Home() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [retryCountdown, setRetryCountdown] = useState(0);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   const isSubmittingRef = useRef<boolean>(false);
   const isDark = theme === 'dark';
 
-  // 1. Carrega tema salvo e exercícios públicos com restauração do último rascunho
+  // 1. Carrega tema salvo, exercícios públicos e cooldown ativo
   useEffect(() => {
     try {
       const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) as AppTheme | null;
       if (savedTheme === 'light' || savedTheme === 'dark') {
         setTheme(savedTheme);
+      }
+
+      // Restaura cooldown ativo mesmo se o usuário der F5
+      const savedCooldownUntil = localStorage.getItem(STORAGE_KEYS.COOLDOWN);
+      if (savedCooldownUntil) {
+        const until = parseInt(savedCooldownUntil, 10);
+        const remaining = Math.ceil((until - Date.now()) / 1000);
+        if (remaining > 0) {
+          setCooldownSeconds(remaining);
+        } else {
+          localStorage.removeItem(STORAGE_KEYS.COOLDOWN);
+        }
       }
     } catch {
       // Ignora erro de acesso ao localStorage
@@ -167,6 +189,36 @@ export default function Home() {
         console.error('Erro ao carregar exercícios públicos:', err);
       });
   }, []);
+
+  // 2. Temporizador do cooldown no botão
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+
+    const interval = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          try {
+            localStorage.removeItem(STORAGE_KEYS.COOLDOWN);
+          } catch {
+            // Ignora erro
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [cooldownSeconds]);
+
+  const startCooldown = (seconds: number = SUCCESS_COOLDOWN_SECONDS) => {
+    setCooldownSeconds(seconds);
+    try {
+      localStorage.setItem(STORAGE_KEYS.COOLDOWN, (Date.now() + seconds * 1000).toString());
+    } catch {
+      // Ignora erro
+    }
+  };
 
   const handleToggleTheme = (newTheme: AppTheme) => {
     setTheme(newTheme);
@@ -243,7 +295,7 @@ export default function Home() {
   };
 
   const handleAnalyze = async () => {
-    if (isSubmittingRef.current) return;
+    if (isSubmittingRef.current || cooldownSeconds > 0) return;
 
     const validation = validateJavaInput(code);
     if (!validation.isValid) {
@@ -264,6 +316,15 @@ export default function Home() {
         if (response.status === 'success' && response.data) {
           setResult(response.data);
           setAppState('success');
+          startCooldown(SUCCESS_COOLDOWN_SECONDS);
+          return;
+        }
+
+        if (response.status === 'rate_limit') {
+          const waitSeconds = response.retryAfterSeconds || SUCCESS_COOLDOWN_SECONDS;
+          startCooldown(waitSeconds);
+          setErrorMessage(response.error || `Aguarde ${waitSeconds}s antes de enviar outra análise.`);
+          setAppState('error');
           return;
         }
 
@@ -340,10 +401,11 @@ export default function Home() {
           
           <AnalyzeButton 
             onClick={handleAnalyze}
-            disabled={!trimmedCode || isTooShort || isTooLong || appState === 'loading' || appState === 'retrying'}
+            disabled={!trimmedCode || isTooShort || isTooLong || appState === 'loading' || appState === 'retrying' || cooldownSeconds > 0}
             state={appState}
             theme={theme}
             retrySeconds={retryCountdown}
+            cooldownSeconds={cooldownSeconds}
           />
 
           {appState === 'error' && (

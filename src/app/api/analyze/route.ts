@@ -15,17 +15,17 @@ const MIN_CODE_LENGTH = 10;
 export async function POST(request: Request) {
   try {
     // 1. Rate Limiting por IP
-    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim() 
-      || request.headers.get('x-real-ip') 
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim()
+      || request.headers.get('x-real-ip')
       || 'anonymous-client';
 
     const rateLimit = checkRateLimit(clientIp);
     if (!rateLimit.allowed) {
       return NextResponse.json(
-        { 
-          error: `Muitas requisições deste IP. Aguarde ${rateLimit.resetInSeconds} segundos para tentar novamente.` 
+        {
+          error: `Por favor, aguarde ${rateLimit.resetInSeconds} segundo${rateLimit.resetInSeconds > 1 ? 's' : ''} antes de realizar uma nova análise.`
         },
-        { 
+        {
           status: 429,
           headers: {
             'Retry-After': rateLimit.resetInSeconds.toString(),
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     if (!body || typeof body.code !== 'string') {
       return NextResponse.json(
-        { error: 'Payload inválido. O campo "code" deve ser uma string.' }, 
+        { error: 'Payload inválido. O campo "code" deve ser uma string.' },
         { status: 400 }
       );
     }
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
     const availableKeys = getGroqApiKeys();
     if (availableKeys.length === 0) {
       return NextResponse.json(
-        { error: 'Nenhuma chave da API do Groq configurada no servidor (.env).' }, 
+        { error: 'Nenhuma chave da API do Groq configurada no servidor (.env).' },
         { status: 500 }
       );
     }

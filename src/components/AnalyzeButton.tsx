@@ -1,4 +1,4 @@
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Timer } from 'lucide-react';
 import { AppTheme } from '@/types';
 
 interface AnalyzeButtonProps {
@@ -7,14 +7,24 @@ interface AnalyzeButtonProps {
   readonly state: 'idle' | 'loading' | 'retrying' | 'success' | 'error';
   readonly theme: AppTheme;
   readonly retrySeconds?: number;
+  readonly cooldownSeconds?: number;
 }
 
-export function AnalyzeButton({ onClick, disabled, state, theme, retrySeconds }: Readonly<AnalyzeButtonProps>) {
+export function AnalyzeButton({
+  onClick,
+  disabled,
+  state,
+  theme,
+  retrySeconds,
+  cooldownSeconds = 0,
+}: Readonly<AnalyzeButtonProps>) {
   const isDark = theme === 'dark';
   const isBusy = state === 'loading' || state === 'retrying';
+  const isCoolingDown = cooldownSeconds > 0;
+  const isDisabled = disabled || isBusy || isCoolingDown;
 
   const getButtonStyles = () => {
-    if (disabled || isBusy) {
+    if (isDisabled) {
       return isDark
         ? 'bg-zinc-800 text-zinc-500 border border-zinc-700/50 cursor-not-allowed'
         : 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed';
@@ -29,9 +39,9 @@ export function AnalyzeButton({ onClick, disabled, state, theme, retrySeconds }:
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled || isBusy}
+      disabled={isDisabled}
       className={`
-        w-full py-4 rounded-xl text-lg transition-all duration-200 flex items-center justify-center gap-2 select-none
+        w-full py-4 rounded-xl text-lg transition-all duration-200 flex items-center justify-center gap-2 select-none font-medium
         ${getButtonStyles()}
       `}
     >
@@ -47,7 +57,13 @@ export function AnalyzeButton({ onClick, disabled, state, theme, retrySeconds }:
           <span>Muitas requisições! Tentando novamente em {retrySeconds}s...</span>
         </>
       )}
-      {(state === 'idle' || state === 'success' || state === 'error') && (
+      {!isBusy && isCoolingDown && (
+        <>
+          <Timer className="w-5 h-5 animate-pulse text-amber-500" />
+          <span>Aguarde {cooldownSeconds}s para nova análise</span>
+        </>
+      )}
+      {!isBusy && !isCoolingDown && (
         <>
           <Sparkles className="w-5 h-5" />
           <span>Analisar Clean Code</span>

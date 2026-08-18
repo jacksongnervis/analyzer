@@ -1,56 +1,44 @@
-interface RateLimitEntry {
-  count: number;
-  resetTime: number;
+export interface RateLimitResult {
+  readonly allowed: boolean;
+  readonly resetInSeconds: number;
 }
 
-const rateLimitMap = new Map<string, RateLimitEntry>();
+const cooldownMap = new Map<string, number>();
 
-// Configuração: máximo de 15 requisições por minuto por IP
-const WINDOW_MS = 60 * 1000;
-const MAX_REQUESTS_PER_WINDOW = 15;
+// Cooldown de 60 segundos após cada requisição por IP
+const COOLDOWN_SECONDS = 60;
+const COOLDOWN_MS = COOLDOWN_SECONDS * 1000;
 const MAX_ENTRIES = 1000;
 
 function cleanupExpiredEntries(now: number): void {
-  if (rateLimitMap.size > MAX_ENTRIES) {
-    for (const [ip, entry] of rateLimitMap.entries()) {
-      if (now > entry.resetTime) {
-        rateLimitMap.delete(ip);
+  if (cooldownMap.size > MAX_ENTRIES) {
+    for (const [ip, nextAllowedTime] of cooldownMap.entries()) {
+      if (now >= nextAllowedTime) {
+        cooldownMap.delete(ip);
       }
     }
   }
 }
 
-export function checkRateLimit(ip: string): { allowed: boolean; remaining: number; resetInSeconds: number } {
+export function checkRateLimit(ip: string): RateLimitResult {
   const now = Date.now();
   cleanupExpiredEntries(now);
 
-  const entry = rateLimitMap.get(ip);
+  const nextAllowedTime = cooldownMap.get(ip);
 
-  if (!entry || now > entry.resetTime) {
-    // Nova janela
-    rateLimitMap.set(ip, {
-      count: 1,
-      resetTime: now + WINDOW_MS,
-    });
-    return {
-      allowed: true,
-      remaining: MAX_REQUESTS_PER_WINDOW - 1,
-      resetInSeconds: Math.ceil(WINDOW_MS / 1000),
-    };
-  }
-
-  if (entry.count >= MAX_REQUESTS_PER_WINDOW) {
+  if (nextAllowedTime && now < nextAllowedTime) {
+    const remainingSeconds = Math.ceil((nextAllowedTime - now) / 1000);
     return {
       allowed: false,
-      remaining: 0,
-      resetInSeconds: Math.ceil((entry.resetTime - now) / 1000),
+      resetInSeconds: remainingSeconds,
     };
   }
 
-  entry.count += 1;
+  // Registra o próximo momento em que o IP poderá fazer uma nova requisição
+  cooldownMap.set(ip, now + COOLDOWN_MS);
+
   return {
     allowed: true,
-    remaining: MAX_REQUESTS_PER_WINDOW - entry.count,
-    resetInSeconds: Math.ceil((entry.resetTime - now) / 1000),
+    resetInSeconds: 0,
   };
 }
