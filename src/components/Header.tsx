@@ -1,3 +1,5 @@
+'use client';
+
 import { Code2, Moon, Sun } from 'lucide-react';
 import { AppTheme } from '@/types';
 
@@ -10,75 +12,88 @@ export function Header({ theme, onToggleTheme }: Readonly<HeaderProps>) {
   const isDark = theme === 'dark';
 
   return (
-    <header 
-      className={`border-b transition-colors duration-300 ${
-        isDark 
-          ? 'bg-zinc-900 border-zinc-800' 
-          : 'bg-white border-slate-200 shadow-sm'
+    <header
+      className={`border-b-2 transition-colors duration-300 sticky top-0 z-30 backdrop-blur-md ${
+        isDark
+          ? 'bg-bnt-ink-deep/95 border-bnt-cream/20'
+          : 'bg-bnt-cream/95 border-bnt-ink/10'
       }`}
     >
-      <div className="max-w-4xl mx-auto px-4 py-5 flex items-center justify-between">
-        {/* Brand Logo & Title with Gradient Animation and Hover Glow Shift */}
-        <div className="flex items-center gap-3 select-none group cursor-default">
-          {/* Símbolo de Código </> com micro-interação */}
-          <div className={`p-2.5 rounded-xl border flex items-center justify-center transition-all duration-300 group-hover:scale-105 ${
-            isDark 
-              ? 'bg-zinc-950 border-zinc-800 text-emerald-400 shadow-inner group-hover:border-emerald-500/50 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
-              : 'bg-emerald-50 border-emerald-200 text-emerald-600 shadow-xs group-hover:border-emerald-400 group-hover:shadow-[0_0_12px_rgba(16,185,129,0.25)]'
-          }`}>
-            <Code2 className="w-5 h-5 transition-transform duration-300 group-hover:rotate-6" />
+      <div className="max-w-4xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between gap-3">
+        {/* Brand Logo & Title */}
+        <div className="flex items-center gap-2.5 sm:gap-3 select-none group cursor-default">
+          <div
+            className={`p-2 sm:p-2.5 rounded-xl border-2 flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:-rotate-2 ${
+              isDark
+                ? 'bg-emerald-500 border-bnt-cream text-slate-950 shadow-[3px_3px_0_0_#faf8f4]'
+                : 'bg-emerald-600 border-bnt-ink text-white shadow-[3px_3px_0_0_#0f172a]'
+            }`}
+          >
+            <Code2 className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:rotate-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight transition-all duration-300">
-              <span className={`transition-colors duration-300 ${
-                isDark 
-                  ? 'text-zinc-100 group-hover:text-emerald-200' 
-                  : 'text-slate-900 group-hover:text-emerald-800'
-              }`}>
+            <h1 className="font-display font-black text-lg sm:text-2xl tracking-tight leading-none">
+              <span className={isDark ? 'text-bnt-cream' : 'text-bnt-ink'}>
                 Clean Code
               </span>{' '}
-              <span className="bg-gradient-to-r from-emerald-500 via-teal-400 via-amber-400 to-emerald-500 dark:from-emerald-400 dark:via-teal-300 dark:via-amber-300 dark:to-emerald-400 bg-clip-text text-transparent animate-title-gradient font-black transition-all duration-300 group-hover:drop-shadow-[0_0_14px_rgba(52,211,153,0.4)]">
+              <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>
                 Analyzer
               </span>
             </h1>
           </div>
         </div>
 
-        {/* Global Theme Toggle */}
-        <div 
-          className={`flex items-center p-1 rounded-xl border text-xs font-medium ${
-            isDark 
-              ? 'bg-zinc-950 border-zinc-800' 
-              : 'bg-slate-100 border-slate-300'
+        {/* Global Theme Toggle — Animated Sliding Segmented Pill */}
+        <div
+          className={`relative flex items-center p-1 rounded-full border-2 text-xs font-bold transition-colors duration-300 ${
+            isDark
+              ? 'bg-bnt-ink border-bnt-cream/30'
+              : 'bg-white border-bnt-ink'
           }`}
+          role="radiogroup"
+          aria-label="Alternar tema visual"
         >
+          {/* Animated Background Slider Indicator */}
+          <div
+            aria-hidden="true"
+            className={`absolute top-1 bottom-1 rounded-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] border-2 ${
+              isDark
+                ? 'left-1 w-[calc(50%-4px)] bg-emerald-600 border-bnt-cream text-white shadow-[2px_2px_0_0_#faf8f4]'
+                : 'left-[calc(50%+2px)] w-[calc(50%-3px)] bg-emerald-500 border-bnt-ink text-slate-950 shadow-[2px_2px_0_0_#0f172a]'
+            }`}
+          />
+
           <button
             type="button"
+            role="radio"
+            aria-checked={isDark}
             onClick={() => onToggleTheme('dark')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer transition-all ${
-              isDark 
-                ? 'bg-zinc-800 text-zinc-100 font-semibold shadow-sm border border-zinc-700' 
-                : 'text-slate-500 hover:text-slate-800'
+            className={`relative z-10 flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full cursor-pointer transition-colors duration-200 ${
+              isDark
+                ? 'text-white'
+                : 'text-bnt-ink/70 hover:text-emerald-600'
             }`}
-            title="Tema Escuro"
-            aria-label="Ativar tema escuro"
+            title="Ativar tema escuro"
+            aria-label="Tema Escuro"
           >
-            <Moon className="w-3.5 h-3.5 text-amber-400" />
+            <Moon className={`w-3.5 h-3.5 transition-transform duration-300 ${isDark ? 'rotate-0 scale-100' : '-rotate-45 scale-90'}`} />
             <span className="hidden sm:inline">Escuro</span>
           </button>
-          
+
           <button
             type="button"
+            role="radio"
+            aria-checked={!isDark}
             onClick={() => onToggleTheme('light')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer transition-all ${
-              !isDark 
-                ? 'bg-white text-amber-600 font-semibold shadow-sm border border-slate-200' 
-                : 'text-zinc-400 hover:text-zinc-200'
+            className={`relative z-10 flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full cursor-pointer transition-colors duration-200 ${
+              !isDark
+                ? 'text-slate-950 font-bold'
+                : 'text-bnt-cream/70 hover:text-bnt-cream'
             }`}
-            title="Tema Claro"
-            aria-label="Ativar tema claro"
+            title="Ativar tema claro"
+            aria-label="Tema Claro"
           >
-            <Sun className="w-3.5 h-3.5 text-amber-500" />
+            <Sun className={`w-3.5 h-3.5 transition-transform duration-300 ${!isDark ? 'rotate-0 scale-100' : 'rotate-45 scale-90'}`} />
             <span className="hidden sm:inline">Claro</span>
           </button>
         </div>

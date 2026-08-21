@@ -26,13 +26,13 @@ export function AnalyzeButton({
   const getButtonStyles = () => {
     if (isDisabled) {
       return isDark
-        ? 'bg-zinc-800 text-zinc-500 border border-zinc-700/50 cursor-not-allowed'
-        : 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed';
+        ? 'bg-bnt-ink border-bnt-cream/20 text-bnt-cream/40 cursor-not-allowed border-dashed'
+        : 'bg-bnt-cream border-bnt-ink/20 text-bnt-ink/40 cursor-not-allowed border-dashed';
     }
 
     return isDark
-      ? 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/10 active:scale-[0.99] font-bold cursor-pointer'
-      : 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/25 active:scale-[0.99] font-semibold cursor-pointer';
+      ? 'bg-emerald-500 border-bnt-cream text-slate-950 shadow-[5px_5px_0_0_#faf8f4] hover:shadow-[8px_8px_0_0_#faf8f4] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[5px_5px_0_0_#faf8f4]'
+      : 'bg-emerald-500 border-bnt-ink text-slate-950 shadow-[5px_5px_0_0_#0f172a] hover:shadow-[8px_8px_0_0_#0f172a] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[5px_5px_0_0_#0f172a]';
   };
 
   return (
@@ -41,7 +41,7 @@ export function AnalyzeButton({
       onClick={onClick}
       disabled={isDisabled}
       className={`
-        w-full py-4 rounded-xl text-lg transition-all duration-200 flex items-center justify-center gap-2 select-none font-medium
+        w-full py-4 rounded-2xl text-lg transition-all duration-200 flex items-center justify-center gap-2 select-none font-display font-black uppercase tracking-wide border-2
         ${getButtonStyles()}
       `}
     >
@@ -59,7 +59,7 @@ export function AnalyzeButton({
       )}
       {!isBusy && isCoolingDown && (
         <>
-          <Timer className="w-5 h-5 animate-pulse text-amber-500" />
+          <Timer className="w-5 h-5 animate-pulse text-emerald-400" />
           <span>Aguarde {cooldownSeconds}s para nova análise</span>
         </>
       )}
