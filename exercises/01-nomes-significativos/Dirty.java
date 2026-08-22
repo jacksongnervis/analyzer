@@ -1,6 +1,6 @@
 import java.util.Scanner;
 
-public class Exercicio {
+public class Dirty {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
@@ -26,7 +26,7 @@ public class Exercicio {
                 if(o == 2) {
                     System.out.print("Qto? ");
                     double v = sc.nextDouble();
-                    // Checa se passa do limite do cheque especial que é -300
+                    
                     if(d - v < -300) {
                         System.out.println("Nao da, sem limite.");
                     } else {

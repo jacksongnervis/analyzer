@@ -1,14 +1,13 @@
 import java.util.Scanner;
 
-public class Exercicio {
+public class Dirty {
     public static void main(String[] args) {
         Scanner s = new Scanner(System.in);
 
-        // Vetores paralelos e números mágicos limitando o sistema
         String[] n = new String[100];
         double[] sal = new double[100];
         int[] t = new int[100];
-        int c = 0; // contador
+        int c = 0;
 
         while(true) {
             System.out.println("1-Add 2-Bonus 3-Sair");
@@ -23,7 +22,6 @@ public class Exercicio {
             } else if(op == 2) {
                 for(int i = 0; i < c; i++) {
                     double b = 0;
-                    // Falta de Polimorfismo: Regra de negócio presa em ifs
                     if(t[i] == 1) {
                         b = (sal[i] * 0.2) + 1000;
                     } else if(t[i] == 2) {

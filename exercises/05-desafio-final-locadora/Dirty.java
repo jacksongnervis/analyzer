@@ -1,6 +1,6 @@
 import java.util.Scanner;
 
-public class Exercicio {
+public class Dirty {
     public static void main(String[] args) {
         Scanner s = new Scanner(System.in);
 
@@ -9,7 +9,6 @@ public class Exercicio {
         System.out.print("Tipo veiculo (1-Carro, 2-Moto): "); int t = s.nextInt();
         System.out.print("Qtd dias: "); int d = s.nextInt();
 
-        // Anti-pattern: Arrow Code (Código em formato de flecha)
         if (i < 18) {
             System.out.println("Erro: menor de idade nao pode alugar.");
         } else {
@@ -18,13 +17,12 @@ public class Exercicio {
             } else {
                 double v = 0;
 
-                // Falta de Polimorfismo e Números Mágicos (regras misturadas)
                 if (t == 1) {
                     v = d * 100.0;
-                    if (d > 7) v = v - (v * 0.10); // 10% desconto p/ carros
+                    if (d > 7) v = v - (v * 0.10);
                 } else if (t == 2) {
                     v = d * 50.0;
-                    if (d > 5) v = v - (v * 0.05); // 5% desconto p/ motos
+                    if (d > 5) v = v - (v * 0.05);
                 } else {
                     System.out.println("Erro: tipo invalido.");
                 }

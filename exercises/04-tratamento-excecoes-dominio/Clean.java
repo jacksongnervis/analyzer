@@ -4,15 +4,12 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.Scanner;
 
-// --- 1. EXCEÇÃO CUSTOMIZADA ---
-// Centraliza os erros de regra de negócio
 class ReservaException extends RuntimeException {
     public ReservaException(String mensagem) {
         super(mensagem);
     }
 }
 
-// --- 2. POLIMORFISMO E ABSTRAÇÃO ---
 interface Quarto {
     int getNumero();
     double calcularDiaria(long dias);
@@ -34,7 +31,6 @@ class QuartoLuxo implements Quarto {
     public double calcularDiaria(long dias) { return dias * 300.0; }
 }
 
-// --- 3. CLASSE DE DOMÍNIO (Com Programação Defensiva) ---
 class Reserva {
     private Quarto quarto;
     private LocalDate checkin;
@@ -50,7 +46,6 @@ class Reserva {
     private void validarDatas(LocalDate checkin, LocalDate checkout) {
         LocalDate agora = LocalDate.now();
         if (checkin.isBefore(agora) || checkout.isBefore(agora)) {
-            // Lançamento de erro de regra de negócio
             throw new ReservaException("As datas da reserva não podem ser no passado.");
         }
         if (!checkout.isAfter(checkin)) {
@@ -60,7 +55,7 @@ class Reserva {
 
     public double calcularTotal() {
         long dias = ChronoUnit.DAYS.between(checkin, checkout);
-        return quarto.calcularDiaria(dias); // Polimorfismo em ação
+        return quarto.calcularDiaria(dias);
     }
 
     @Override
@@ -70,8 +65,7 @@ class Reserva {
     }
 }
 
-// --- 4. APLICAÇÃO (UI e Tratamento de Exceções) ---
-public class Solucao {
+public class Clean {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -93,21 +87,17 @@ public class Solucao {
             System.out.print("Data check-out (dd/MM/yyyy): ");
             LocalDate checkout = LocalDate.parse(scanner.next(), fmt);
 
-            // A classe Reserva faz a própria validação ao ser instanciada
             Reserva reserva = new Reserva(quarto, checkin, checkout);
             System.out.println(reserva);
 
         } catch (DateTimeParseException e) {
-            // Captura erros de digitação de data
             System.out.println("❌ Erro de formatação: Digite a data no formato dd/MM/yyyy.");
         } catch (ReservaException e) {
-            // Captura violações das regras de negócio
             System.out.println("⚠️ Erro na Reserva: " + e.getMessage());
         } catch (Exception e) {
-            // Captura qualquer erro inesperado (ex: InputMismatchException se digitar letras no número)
             System.out.println("🚨 Erro inesperado: Verifique os dados inseridos.");
         } finally {
-            scanner.close(); // Boas práticas: fechando recursos
+            scanner.close();
         }
     }
 }

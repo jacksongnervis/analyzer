@@ -1,6 +1,5 @@
 import java.util.Scanner;
 
-// --- 1. COMPOSIÇÃO (Unidade 2.1) ---
 class Endereco {
     private String rua;
     private String numero;
@@ -14,7 +13,7 @@ class Endereco {
 
 class Cliente {
     private String nome;
-    private Endereco endereco; // Composição: Cliente TEM UM endereço
+    private Endereco endereco;
 
     public Cliente(String nome, Endereco endereco) {
         this.nome = nome;
@@ -24,8 +23,6 @@ class Cliente {
     public Endereco getEndereco() { return endereco; }
 }
 
-// --- 2. INTERFACES E POLIMORFISMO (Unidades 2.3 e 2.5) ---
-// Padrão Strategy: Cada pagamento tem sua classe implementando a Interface
 interface Pagamento {
     void processar(double valor);
 }
@@ -42,7 +39,6 @@ class PagamentoCartao implements Pagamento {
     }
 }
 
-// --- 3. CLASSE DE NEGÓCIO ---
 class Pedido {
     private Cliente cliente;
     private double valor;
@@ -55,11 +51,10 @@ class Pedido {
     }
 
     public double aplicarDesconto(int tipoCliente) {
-        // Em um sistema real, o Desconto também seria uma Interface (Strategy)
         switch (tipoCliente) {
-            case 2: return this.valor * 0.90; // VIP (10% off)
-            case 3: return this.valor * 0.80; // Funcionario (20% off)
-            default: return this.valor;       // Comum
+            case 2: return this.valor * 0.90;
+            case 3: return this.valor * 0.80;
+            default: return this.valor;
         }
     }
 
@@ -70,17 +65,14 @@ class Pedido {
         System.out.println("Entrega: " + cliente.getEndereco().getEnderecoCompleto());
         System.out.println("Total a pagar: R$ " + valorFinal);
 
-        // Polimorfismo: Não há 'if/else'. O objeto apenas "processa".
         metodoPagamento.processar(valorFinal);
     }
 }
 
-// --- 4. APLICAÇÃO ---
-public class Solucao {
+public class Clean {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        // Entrada e montagem (Composição)
         Endereco endereco = new Endereco("Rua das Flores", "123B");
         Cliente cliente = new Cliente("João Silva", endereco);
 
@@ -93,10 +85,8 @@ public class Solucao {
         System.out.print("Pagamento (1-Pix, 2-Cartao): ");
         int opPagamento = scanner.nextInt();
 
-        // Fábrica simples baseada na escolha
         Pagamento pagamento = (opPagamento == 1) ? new PagamentoPix() : new PagamentoCartao();
 
-        // Injeção de Dependência no Pedido
         Pedido pedido = new Pedido(cliente, valor, pagamento);
         pedido.finalizar(tipoCliente);
 

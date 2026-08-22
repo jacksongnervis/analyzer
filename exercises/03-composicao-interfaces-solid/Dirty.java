@@ -1,6 +1,6 @@
 import java.util.Scanner;
 
-public class Exercicio {
+public class Dirty {
     public static void main(String[] args) {
         Scanner s = new Scanner(System.in);
 
@@ -13,7 +13,6 @@ public class Exercicio {
         System.out.print("Pagamento (1-Pix, 2-Cartao): "); int p = s.nextInt();
 
         double d = 0;
-        // Bad smell: Violação do OCP (Aberto/Fechado). Se criar novo tipo, tem que alterar aqui.
         if (tCli == 1) {
             d = 0;
         } else if (tCli == 2) {
@@ -26,7 +25,6 @@ public class Exercicio {
         System.out.println("\nCliente: " + n + " | End: " + r + ", " + nu);
         System.out.println("Total a pagar: " + vf);
 
-        // Bad smell: Falta de Interfaces/Polimorfismo para processar pagamento
         if (p == 1) {
             System.out.println("Gerando chave PIX para o valor de " + vf);
         } else if (p == 2) {

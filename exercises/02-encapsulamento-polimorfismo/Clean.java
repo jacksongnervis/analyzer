@@ -2,7 +2,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-// 1. Abstração e Encapsulamento
 abstract class Funcionario {
     private String nome;
     private double salario;
@@ -16,17 +15,15 @@ abstract class Funcionario {
     public String getNome() { return nome; }
     public double getSalario() { return salario; }
 
-    // Contrato polimórfico: cada filho sabe calcular o seu
     public abstract double calcularBonus();
 }
 
-// 2. Herança
 class Gerente extends Funcionario {
     public Gerente(String nome, double salario) { super(nome, salario); }
 
     @Override
     public double calcularBonus() {
-        return (getSalario() * 0.2) + 1000.0; // Regra específica do Gerente
+        return (getSalario() * 0.2) + 1000.0;
     }
 }
 
@@ -35,19 +32,17 @@ class Desenvolvedor extends Funcionario {
 
     @Override
     public double calcularBonus() {
-        return getSalario() * 0.1; // Regra específica do Dev
+        return getSalario() * 0.1;
     }
 }
 
-// 3. Aplicação Principal (Interface de Usuário)
-public class Solucao {
+public class Clean {
     private static final int OP_ADD = 1;
     private static final int OP_BONUS = 2;
     private static final int OP_SAIR = 3;
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        // Substitui os vetores paralelos por uma Coleção de Objetos
         List<Funcionario> funcionarios = new ArrayList<>();
         boolean executando = true;
 
@@ -63,7 +58,6 @@ public class Solucao {
                 System.out.print("Tipo (1-Gerente, 2-Dev): ");
                 int tipo = scanner.nextInt();
 
-                // Instancia o objeto correto dependendo do tipo
                 if (tipo == 1) {
                     funcionarios.add(new Gerente(nome, salario));
                 } else if (tipo == 2) {
@@ -75,7 +69,6 @@ public class Solucao {
             } else if (opcao == OP_BONUS) {
                 System.out.println("\n--- FOLHA DE BÔNUS ---");
                 for (Funcionario f : funcionarios) {
-                    // Mágica do Polimorfismo: não precisamos de "IF". O objeto sabe como agir!
                     System.out.printf("Funcionario: %s | Bônus: R$ %.2f\n", f.getNome(), f.calcularBonus());
                 }
             } else if (opcao == OP_SAIR) {

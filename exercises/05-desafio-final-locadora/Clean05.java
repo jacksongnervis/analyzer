@@ -1,12 +1,10 @@
 import java.util.Scanner;
 import java.util.InputMismatchException;
 
-// 1. EXCEÇÃO CUSTOMIZADA
 class LocacaoException extends RuntimeException {
     public LocacaoException(String mensagem) { super(mensagem); }
 }
 
-// 2. DOMÍNIO: CLIENTE (Composição)
 class Cliente {
     private String nome;
     private int idade;
@@ -19,7 +17,6 @@ class Cliente {
     public String getNome() { return nome; }
 }
 
-// 3. POLIMORFISMO E ABSTRAÇÃO (Interface/Classes de Veículos)
 interface Veiculo {
     double calcularValorAluguel(int dias);
 }
@@ -27,18 +24,17 @@ interface Veiculo {
 class Carro implements Veiculo {
     public double calcularValorAluguel(int dias) {
         double total = dias * 100.0;
-        return (dias > 7) ? total * 0.90 : total; // Aplica 10% de desconto
+        return (dias > 7) ? total * 0.90 : total;
     }
 }
 
 class Moto implements Veiculo {
     public double calcularValorAluguel(int dias) {
         double total = dias * 50.0;
-        return (dias > 5) ? total * 0.95 : total; // Aplica 5% de desconto
+        return (dias > 5) ? total * 0.95 : total;
     }
 }
 
-// 4. LÓGICA DE NEGÓCIO (Protegendo o estado do objeto)
 class Locacao {
     private Cliente cliente;
     private Veiculo veiculo;
@@ -59,8 +55,7 @@ class Locacao {
     }
 }
 
-// 5. APLICAÇÃO E TRATAMENTO DE ERROS (UI)
-public class Solucao {
+public class Clean05 {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
@@ -70,7 +65,7 @@ public class Solucao {
             System.out.print("Idade: ");
             int idade = scanner.nextInt();
 
-            Cliente cliente = new Cliente(nome, idade); // Valida idade automaticamente
+            Cliente cliente = new Cliente(nome, idade);
 
             System.out.print("Tipo veículo (1-Carro, 2-Moto): ");
             int tipo = scanner.nextInt();
@@ -83,7 +78,6 @@ public class Solucao {
             System.out.print("Qtd dias: ");
             int dias = scanner.nextInt();
 
-            // Valida dias e junta as peças
             Locacao locacao = new Locacao(cliente, veiculo, dias);
             locacao.emitirRecibo();
 

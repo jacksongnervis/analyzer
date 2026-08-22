@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/01-nomes-significativos" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/02-encapsulamento-polimorfismo" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/03-composicao-interfaces-solid" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/04-tratamento-excecoes-dominio" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/05-desafio-final-locadora" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

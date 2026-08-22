@@ -1,8 +1,7 @@
 import java.util.Scanner;
 
-public class Solucao {
+public class Clean {
 
-    // Evitando números mágicos no menu
     private static final int OPCAO_DEPOSITAR = 1;
     private static final int OPCAO_SACAR = 2;
     private static final int OPCAO_VER_SALDO = 3;
@@ -11,7 +10,6 @@ public class Solucao {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        // Inicialização limpa da conta com valores configuráveis
         ContaBancaria conta = new ContaBancaria(500.0, 300.0);
         boolean executando = true;
 
@@ -51,7 +49,6 @@ public class Solucao {
                         break;
                 }
             } catch (IllegalArgumentException e) {
-                // Captura as validações feitas pela classe ContaBancaria e exibe o erro
                 System.out.println("❌ Erro: " + e.getMessage());
             }
 
