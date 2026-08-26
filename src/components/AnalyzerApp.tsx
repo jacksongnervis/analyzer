@@ -160,7 +160,7 @@ interface AnalyzerAppProps {
 export function AnalyzerApp({ initialExercises = [] }: Readonly<AnalyzerAppProps>) {
   const [theme, setTheme] = useState<AppTheme>('dark');
   const [exercises, setExercises] = useState<Exercise[]>(initialExercises);
-  
+
   // Define o primeiro exercício como padrão se houver exercícios disponíveis
   const defaultExerciseId = initialExercises.length > 0 ? initialExercises[0].id : null;
   const defaultInitialCode = initialExercises.length > 0 ? initialExercises[0].initialCode : '';
@@ -208,7 +208,7 @@ export function AnalyzerApp({ initialExercises = [] }: Readonly<AnalyzerAppProps
     try {
       const savedExId = localStorage.getItem(STORAGE_KEYS.SELECTED_EXERCISE);
       const targetExercise = savedExId ? list.find((ex) => ex.id === savedExId) : null;
-      
+
       if (targetExercise) {
         setSelectedExerciseId(targetExercise.id);
         const savedDraft = localStorage.getItem(`${STORAGE_KEYS.DRAFT_PREFIX}${targetExercise.id}`);
@@ -221,7 +221,7 @@ export function AnalyzerApp({ initialExercises = [] }: Readonly<AnalyzerAppProps
         setCode(savedDraft ?? firstEx.initialCode);
       }
     } catch {
-      // Ignora erro de acesso ao localStorage
+      // Ignora erro
     }
   }, [exercises, initialExercises]);
 
@@ -396,11 +396,10 @@ export function AnalyzerApp({ initialExercises = [] }: Readonly<AnalyzerAppProps
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 font-sans bg-grid ${
-        isDark
+      className={`min-h-screen transition-colors duration-300 font-sans bg-grid ${isDark
           ? 'bg-bnt-ink-deep text-bnt-cream selection:bg-emerald-500/30'
           : 'bg-bnt-cream text-bnt-ink selection:bg-emerald-500/30'
-      }`}
+        }`}
       style={themeStyle}
     >
       <Header theme={theme} onToggleTheme={handleToggleTheme} />
@@ -419,9 +418,8 @@ export function AnalyzerApp({ initialExercises = [] }: Readonly<AnalyzerAppProps
 
         {/* Input Card Container */}
         <div
-          className={`flex flex-col gap-6 p-5 sm:p-6 card-brutal transition-all duration-300 ${
-            isDark ? 'bg-bnt-ink' : 'bg-white'
-          }`}
+          className={`flex flex-col gap-6 p-5 sm:p-6 card-brutal transition-all duration-300 ${isDark ? 'bg-bnt-ink' : 'bg-white'
+            }`}
         >
           {/* Seletor de Exercícios Guiados — Renderizado de imediato desde o início */}
           <ExerciseSelector
@@ -466,11 +464,10 @@ export function AnalyzerApp({ initialExercises = [] }: Readonly<AnalyzerAppProps
 
           {appState === 'error' && (
             <div
-              className={`px-4 py-3 rounded-xl text-sm flex items-center gap-2.5 border-2 transition-colors ${
-                isDark
+              className={`px-4 py-3 rounded-xl text-sm flex items-center gap-2.5 border-2 transition-colors ${isDark
                   ? 'bg-red-950/50 border-red-400/50 text-red-200'
                   : 'bg-rose-50 border-rose-400 text-rose-800'
-              }`}
+                }`}
             >
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>
