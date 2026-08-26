@@ -1,56 +1,86 @@
-interface RateLimitEntry {
-  count: number;
-  resetTime: number;
+export interface RateLimitResult {
+  readonly allowed: boolean;
+  readonly resetInSeconds: number;
+  readonly reason?: 'cooldown' | 'ip_burst';
 }
 
-const rateLimitMap = new Map<string, RateLimitEntry>();
+const sessionCooldownMap = new Map<string, number>();
+const ipBurstMap = new Map<string, number[]>();
 
-// Configuração: máximo de 15 requisições por minuto por IP
-const WINDOW_MS = 60 * 1000;
-const MAX_REQUESTS_PER_WINDOW = 15;
-const MAX_ENTRIES = 1000;
+// Cooldown de 60 segundos por sessão de aluno
+const COOLDOWN_SECONDS = 60;
+const COOLDOWN_MS = COOLDOWN_SECONDS * 1000;
+
+// Limite de segurança contra rajadas abusivas no mesmo IP (max 45 requisições por minuto por IP)
+// Permite que 30 alunos na mesma rede submetam de forma independente, mas bloqueia scripts abusivos
+const IP_BURST_WINDOW_MS = 60 * 1000;
+const MAX_REQUESTS_PER_IP_WINDOW = 45;
+const MAX_MAP_ENTRIES = 2000;
 
 function cleanupExpiredEntries(now: number): void {
-  if (rateLimitMap.size > MAX_ENTRIES) {
-    for (const [ip, entry] of rateLimitMap.entries()) {
-      if (now > entry.resetTime) {
-        rateLimitMap.delete(ip);
+  if (sessionCooldownMap.size > MAX_MAP_ENTRIES) {
+    for (const [key, nextAllowedTime] of sessionCooldownMap.entries()) {
+      if (now >= nextAllowedTime) {
+        sessionCooldownMap.delete(key);
+      }
+    }
+  }
+
+  if (ipBurstMap.size > MAX_MAP_ENTRIES) {
+    for (const [ip, timestamps] of ipBurstMap.entries()) {
+      const validTimestamps = timestamps.filter(t => now - t < IP_BURST_WINDOW_MS);
+      if (validTimestamps.length === 0) {
+        ipBurstMap.delete(ip);
+      } else {
+        ipBurstMap.set(ip, validTimestamps);
       }
     }
   }
 }
 
-export function checkRateLimit(ip: string): { allowed: boolean; remaining: number; resetInSeconds: number } {
+/**
+ * Valida o rate limit individual por sessão (evitando colisões de NAT em laboratórios)
+ * e aplica proteção secundária contra rajadas globais no mesmo IP.
+ */
+export function checkRateLimit(ip: string, sessionId: string): RateLimitResult {
   const now = Date.now();
   cleanupExpiredEntries(now);
 
-  const entry = rateLimitMap.get(ip);
+  const sessionKey = `${ip}#${sessionId}`;
 
-  if (!entry || now > entry.resetTime) {
-    // Nova janela
-    rateLimitMap.set(ip, {
-      count: 1,
-      resetTime: now + WINDOW_MS,
-    });
-    return {
-      allowed: true,
-      remaining: MAX_REQUESTS_PER_WINDOW - 1,
-      resetInSeconds: Math.ceil(WINDOW_MS / 1000),
-    };
-  }
-
-  if (entry.count >= MAX_REQUESTS_PER_WINDOW) {
+  // 1. Verifica cooldown individual do aluno (60 segundos após submissão)
+  const nextAllowedTime = sessionCooldownMap.get(sessionKey);
+  if (nextAllowedTime && now < nextAllowedTime) {
+    const remainingSeconds = Math.ceil((nextAllowedTime - now) / 1000);
     return {
       allowed: false,
-      remaining: 0,
-      resetInSeconds: Math.ceil((entry.resetTime - now) / 1000),
+      resetInSeconds: remainingSeconds,
+      reason: 'cooldown',
     };
   }
 
-  entry.count += 1;
+  // 2. Verifica rajadas anômalas no mesmo IP (anti-DDoS/anti-spam)
+  const currentIpTimestamps = (ipBurstMap.get(ip) ?? []).filter(
+    t => now - t < IP_BURST_WINDOW_MS
+  );
+
+  if (currentIpTimestamps.length >= MAX_REQUESTS_PER_IP_WINDOW) {
+    const oldestTimestamp = currentIpTimestamps[0];
+    const resetInSeconds = Math.ceil((IP_BURST_WINDOW_MS - (now - oldestTimestamp)) / 1000);
+    return {
+      allowed: false,
+      resetInSeconds: Math.max(1, resetInSeconds),
+      reason: 'ip_burst',
+    };
+  }
+
+  // Registra a submissão para a sessão e para o IP
+  sessionCooldownMap.set(sessionKey, now + COOLDOWN_MS);
+  currentIpTimestamps.push(now);
+  ipBurstMap.set(ip, currentIpTimestamps);
+
   return {
     allowed: true,
-    remaining: MAX_REQUESTS_PER_WINDOW - entry.count,
-    resetInSeconds: Math.ceil((entry.resetTime - now) / 1000),
+    resetInSeconds: 0,
   };
 }

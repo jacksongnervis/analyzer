@@ -1,4 +1,4 @@
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 import { AnalysisResult } from '@/types';
 
 interface CacheEntry {

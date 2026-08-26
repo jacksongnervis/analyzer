@@ -1,13 +1,99 @@
 @import "tailwindcss";
 
+@theme {
+  /* Modern Emerald & Dracula theme palette */
+  --color-bnt-green: #10b981;
+  --color-bnt-green-dark: #059669;
+  --color-bnt-emerald: #10b981;
+  --color-bnt-emerald-dark: #059669;
+  --color-bnt-cyan: #8be9fd;
+  --color-bnt-purple: #bd93f9;
+  --color-bnt-purple-dark: #7c3aed;
+  --color-bnt-yellow: #f1fa8c;
+  --color-bnt-yellow-dark: #ffb86c;
+  --color-bnt-ink: #0f172a;
+  --color-bnt-ink-deep: #090d16;
+  --color-bnt-cream: #faf8f4;
+  --color-bnt-violet-100: #f5f3ff;
+  --color-bnt-pink: #ff79c6;
+  --color-bnt-blue: #38bdf8;
+
+  /* Fonts */
+  --font-display: var(--font-display), 'Bricolage Grotesque', 'Space Grotesque', sans-serif;
+  --font-sans: var(--font-body), 'Plus Jakarta Sans', 'Outfit', sans-serif;
+  --font-mono: var(--font-code), 'Fira Code', 'JetBrains Mono', ui-monospace, monospace;
+}
+
 :root {
-  --background: #09090b;
-  --foreground: #f4f4f5;
+  --background: #090d16;
+  --foreground: #faf8f4;
+  --brutal-border: #0f172a;
+  --brutal-shadow: 5px 5px 0 0 #0f172a;
+  --brutal-shadow-lg: 8px 8px 0 0 #0f172a;
+  --grid-color: rgba(250, 248, 244, 0.06);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans);
+  transition: background-color 300ms ease, color 300ms ease;
+  overflow-x: hidden;
+}
+
+/* Suaviza transição de temas sem causar lag de digitação no editor */
+.card-brutal, header, main, footer, button, span, div, p, h1, h2, h3, label {
+  transition-property: background-color, border-color, color, box-shadow, transform;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+textarea, pre, code, pre * {
+  transition-property: none !important;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+select,
+summary {
+  cursor: pointer;
+}
+
+/* === BACKGROUND GRID === */
+.bg-grid {
+  background-image: linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* === BRUTALIST UTILITY CLASSES === */
+.card-brutal {
+  border-width: 2px;
+  border-radius: 1rem;
+  border-color: var(--brutal-border);
+  box-shadow: var(--brutal-shadow);
+}
+
+.btn-brutal {
+  border-width: 2px;
+  border-radius: 1rem;
+  border-color: var(--brutal-border);
+  box-shadow: var(--brutal-shadow);
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.btn-brutal:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--brutal-shadow-lg);
+}
+
+.btn-brutal:active {
+  transform: translateY(0);
+  box-shadow: var(--brutal-shadow);
 }
 
 /* === EXPAND MODAL ANIMATION === */
@@ -16,6 +102,7 @@ body {
     opacity: 0;
     transform: scale(0.92) translateY(12px);
   }
+
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -26,7 +113,31 @@ body {
   animation: editorExpand 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* === TITLE GRADIENT SHIMMER ANIMATION === */
+@keyframes titleGradientShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-title-gradient {
+  background-size: 250% auto;
+  animation: titleGradientShimmer 6s ease-in-out infinite;
+}
+
 /* === PRISM SYNTAX HIGHLIGHTING (DRACULA THEME) === */
+.syntax-dracula {
+  color: #f8f8f2;
+}
+
 .syntax-dracula .token.comment,
 .syntax-dracula .token.prolog,
 .syntax-dracula .token.doctype,
@@ -46,9 +157,12 @@ body {
 .syntax-dracula .token.property,
 .syntax-dracula .token.tag,
 .syntax-dracula .token.constant,
-.syntax-dracula .token.symbol,
+.syntax-dracula .token.symbol {
+  color: #8be9fd;
+}
+
 .syntax-dracula .token.deleted {
-  color: #ff79c6;
+  color: #ff5555;
 }
 
 .syntax-dracula .token.boolean,
@@ -62,14 +176,12 @@ body {
 .syntax-dracula .token.char,
 .syntax-dracula .token.builtin,
 .syntax-dracula .token.inserted {
-  color: #f1fa8c;
+  color: #50fa7b;
 }
 
 .syntax-dracula .token.operator,
 .syntax-dracula .token.entity,
-.syntax-dracula .token.url,
-.syntax-dracula .language-css .token.string,
-.syntax-dracula .style .token.string {
+.syntax-dracula .token.url {
   color: #ff79c6;
 }
 
@@ -77,26 +189,35 @@ body {
 .syntax-dracula .token.attr-value,
 .syntax-dracula .token.keyword {
   color: #ff79c6;
-  font-weight: 600;
+  font-weight: 500;
 }
 
-.syntax-dracula .token.function,
+.syntax-dracula .token.function {
+  color: #8be9fd;
+  font-weight: 400;
+}
+
 .syntax-dracula .token.class-name {
-  color: #50fa7b;
+  color: #8be9fd;
+  font-weight: 400;
 }
 
 .syntax-dracula .token.regex,
 .syntax-dracula .token.important,
 .syntax-dracula .token.variable {
-  color: #ffb86c;
+  color: #f8f8f2;
 }
 
 .syntax-dracula .token.annotation {
   color: #ffb86c;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 /* === PRISM SYNTAX HIGHLIGHTING (LIGHT THEME) === */
+.syntax-light {
+  color: #1e293b;
+}
+
 .syntax-light .token.comment,
 .syntax-light .token.prolog,
 .syntax-light .token.doctype,
@@ -112,14 +233,17 @@ body {
 .syntax-light .token.property,
 .syntax-light .token.tag,
 .syntax-light .token.constant,
-.syntax-light .token.symbol,
+.syntax-light .token.symbol {
+  color: #0284c7;
+}
+
 .syntax-light .token.deleted {
-  color: #9333ea;
+  color: #dc2626;
 }
 
 .syntax-light .token.boolean,
 .syntax-light .token.number {
-  color: #d97706;
+  color: #7c3aed;
 }
 
 .syntax-light .token.selector,
@@ -128,32 +252,33 @@ body {
 .syntax-light .token.char,
 .syntax-light .token.builtin,
 .syntax-light .token.inserted {
-  color: #16a34a;
+  color: #059669;
 }
 
 .syntax-light .token.operator,
 .syntax-light .token.entity,
 .syntax-light .token.url {
-  color: #0284c7;
+  color: #0f172a;
 }
 
 .syntax-light .token.atrule,
 .syntax-light .token.attr-value,
 .syntax-light .token.keyword {
   color: #7c3aed;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .syntax-light .token.function {
-  color: #2563eb;
+  color: #0284c7;
+  font-weight: 500;
 }
 
 .syntax-light .token.class-name {
-  color: #0284c7;
-  font-weight: 600;
+  color: #0d9488;
+  font-weight: 500;
 }
 
 .syntax-light .token.annotation {
-  color: #ea580c;
-  font-weight: 500;
+  color: #d97706;
+  font-weight: 400;
 }
