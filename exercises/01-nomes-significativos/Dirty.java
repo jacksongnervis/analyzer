@@ -5,7 +5,6 @@ public class Dirty {
         Scanner s = new Scanner(System.in);
         int opc = 1;
 
-        // repete o menu
         while (opc != 0) {
             System.out.println("1-Avaliar Aluno | 0-Sair");
             opc = s.nextInt();
@@ -23,10 +22,9 @@ public class Dirty {
                 System.out.println("N3:");
                 double n3 = s.nextDouble();
 
-                // faz a conta da nota
                 double res = (n1 + n2 + n3) / 3;
 
-                int x = 0; // flag auxiliar para o sistema futuro
+                int x = 0;
 
                 if (f <= 15) {
                     if (res >= 7.0) {
