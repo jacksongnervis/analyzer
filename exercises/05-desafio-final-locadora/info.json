@@ -5,9 +5,9 @@
   "difficulty": "Desafio",
   "description": "Este é o teste final. O sistema de locação sofre do 'Arrow Anti-Pattern' (ifs profundamente aninhados), ausência total de objetos, uso abusivo de números mágicos e tratamento de erros feito via console. Refatore o código aplicando todo o arsenal aprendido: encapsulamento, composição, polimorfismo, exceções customizadas e nomenclaturas limpas.",
   "objectives": [
-    "A estrutura do código foi 'achatada' (Early Return/Guard Clauses), ou continua sofrendo do Anti-Padrão Arrow Code com múltiplos 'ifs' e 'elses' aninhados empurrando o código para a direita?",
-    "A validação de regras de negócio (como impedir aluguel para menores de 18 anos ou dias zerados) garante a integridade dos objetos lançando Exceções Customizadas, ou apenas imprime avisos na tela?",
-    "As lógicas de precificação e desconto estão encapsuladas em suas próprias classes usando Polimorfismo (ex: as classes Carro e Moto sabem se calcular), eliminando a necessidade de verificar o tipo do veículo no método principal?",
-    "Os conceitos do mundo real (Cliente, Veículo, Locação) foram devidamente abstraídos em classes através de Composição, com variáveis de nomes expressivos e constantes substituindo os 'números mágicos'?"
+    "A estrutura do código foi 'achatada', ou continua sofrendo do Anti-Padrão Arrow Code com múltiplos 'ifs' e 'elses' aninhados empurrando o código para a direita?",
+    "A validação de regras de negócio garante a integridade dos objetos lançando Exceções Customizadas, ou apenas imprime avisos na tela?",
+    "As lógicas de precificação e desconto estão encapsuladas em suas próprias classes usando Polimorfismo, eliminando a necessidade de verificar o tipo do veículo no método principal?",
+    "Os conceitos do mundo real foram devidamente abstraídos em classes através de Composição, com variáveis de nomes expressivos e constantes substituindo os 'números mágicos'?"
   ]
 }

@@ -5,9 +5,9 @@
   "difficulty": "Intermediário",
   "description": "O sistema atual usa vetores paralelos para simular o armazenamento e mistura as regras de cálculo com o menu do usuário. Refatore o código introduzindo classes para agrupar os dados e aplique polimorfismo para eliminar os condicionais rígidos de regras de negócio.",
   "objectives": [
-    "Os dados que pertencem a um mesmo conceito (nome, salário e tipo do funcionário) estão agrupados em um único objeto, ou continuam espalhados em vetores separados?",
+    "Os dados que pertencem a um mesmo conceito estão agrupados em um único objeto, ou continuam espalhados em vetores separados?",
     "O cálculo do bônus está engessado em um bloco de 'ifs'? Se a empresa criar um novo cargo amanhã, o código precisará ser alterado e recompilado na classe principal?",
-    "As variáveis e regras matemáticas (como o tamanho 100, ou as taxas de 0.2 e 0.1) têm seus significados claros, ou são apenas 'números mágicos' perdidos no código?",
-    "O método principal (main) sabe detalhes demais sobre como o cálculo é feito, em vez de apenas pedir para o próprio objeto calcular o seu bônus?"
+    "As variáveis e regras matemáticas têm seus significados claros, ou são apenas 'números mágicos' perdidos no código?",
+    "O método principal sabe detalhes demais sobre como o cálculo é feito, em vez de apenas pedir para o próprio objeto calcular o seu bônus?"
   ]
 }

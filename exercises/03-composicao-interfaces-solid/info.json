@@ -5,9 +5,9 @@
   "difficulty": "Avançado",
   "description": "O código sofre de 'Obsessão por Tipos Primitivos', tratando dados complexos como variáveis soltas, e viola o Princípio Aberto/Fechado (OCP) ao amarrar regras de negócio a blocos condicionais. Refatore aplicando Composição e isole os comportamentos mutáveis utilizando Interfaces.",
   "objectives": [
-    "Os dados que compõem uma entidade (como rua, número e nome) estão espalhados em variáveis primitivas soltas, ou foram agrupados estruturalmente em objetos através de Composição (ex: Cliente contendo um Endereço)?",
+    "Os dados que compõem uma entidade estão espalhados em variáveis primitivas soltas, ou foram agrupados estruturalmente em objetos através de Composição?",
     "O processo de pagamento está engessado em blocos 'if/else'? Se a loja decidir aceitar 'Boleto' amanhã, você precisará modificar o código principal em vez de apenas implementar uma nova Interface?",
     "A lógica de desconto obriga a alteração da classe principal toda vez que um novo tipo de cliente é criado, violando a regra de que o código deve ser fechado para modificação e aberto para extensão?",
-    "As variáveis criadas (como r, nu, vf, p) deixam claro o seu propósito real dentro do contexto de um processamento de vendas?"
+    "As variáveis criadas deixam claro o seu propósito real dentro do contexto de um processamento de vendas?"
   ]
 }
