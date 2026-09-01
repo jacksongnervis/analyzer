@@ -201,20 +201,20 @@ export function ExerciseSelector({
                 {activeExercise.description}
               </p>
 
-              <div className="space-y-1.5">
-                <div className={`text-[11px] font-bold uppercase tracking-widest flex items-center gap-1 ${
+              <div className="space-y-2">
+                <div className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
                   isDark ? 'text-emerald-400' : 'text-emerald-700'
                 }`}>
-                  <Target className="w-3.5 h-3.5" />
+                  <Target className="w-4 h-4" />
                   <span>Objetivos da Refatoração:</span>
                 </div>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5">
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
                   {activeExercise.objectives.map((obj, i) => (
-                    <li key={`${activeExercise.id}-obj-${i}`} className="text-xs flex items-start gap-1.5">
-                      <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 mt-0.5 transition-colors ${
+                    <li key={`${activeExercise.id}-obj-${i}`} className="text-[13px] sm:text-sm flex items-start gap-2 leading-snug">
+                      <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 transition-colors ${
                         isDark ? 'text-emerald-400' : 'text-emerald-600'
                       }`} />
-                      <span className={isDark ? 'text-bnt-cream/70' : 'text-bnt-ink/70'}>{obj}</span>
+                      <span className={isDark ? 'text-bnt-cream/80' : 'text-bnt-ink/80'}>{obj}</span>
                     </li>
                   ))}
                 </ul>

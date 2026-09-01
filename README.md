@@ -1,14 +1,11 @@
 <div align="center">
-  <img src="public/java.svg" alt="Java Logo" width="80" height="80" />
-  <h1>Java Clean Code Analyzer</h1>
-  <p>Aplicação web para avaliação pedagógica de Clean Code e boas práticas em Java com Inteligência Artificial.</p>
+  <h1>Clean Code Analyzer</h1>
 
   <p>
-    <img src="https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java" />
+    <img src="https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=java&logoColor=white" alt="Java" />
     <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" />
     <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
     <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
-    <img src="https://img.shields.io/badge/Groq_Cloud-F55036?style=flat-square&logo=groq&logoColor=white" alt="Groq" />
     <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="MIT License" />
   </p>
 </div>
@@ -17,7 +14,7 @@
 
 ## Sobre o Projeto
 
-Uma aplicação web moderna e interativa desenvolvida para apoiar atividades práticas sobre **Clean Code** e boas práticas em Java. O sistema avalia códigos enviados por alunos ou desenvolvedores com base em legibilidade, manutenibilidade, responsabilidade única (SRP) e detecção de *code smells*, fornecendo pontuação didática (0 a 10), lista de problemas e dicas práticas de refatoração usando Inteligência Artificial de alta velocidade (Groq Cloud).
+Uma aplicação web moderna e interativa desenvolvida para apoiar atividades práticas sobre **Clean Code** e boas práticas em Java. O sistema avalia códigos enviados por alunos ou desenvolvedores com base em legibilidade, manutenibilidade, responsabilidade única e detecção de *code smells*, fornecendo pontuação didática (0 a 10), lista de problemas e dicas práticas de refatoração usando Inteligência Artificial.
 
 ---
 
@@ -35,7 +32,7 @@ Uma aplicação web moderna e interativa desenvolvida para apoiar atividades pr�
   - **Inspeção Semântica da CST**: Bloqueia cascas vazias, classes sem lógica ou meras declarações de imports/campos para evitar desperdício de tokens.
 
 - **Exercícios Práticos Guiados**:
-  - Lista de desafios graduais divididos por níveis de dificuldade: **Iniciante**, **Intermediário**, **Avançado** e **Desafio ("O Chefão")**.
+  - Lista de desafios graduais divididos por níveis de dificuldade: **Iniciante**, **Intermediário**, **Avançado** e **Desafio**.
   - Comparação contextual com gabaritos de referência do professor em cada exercício.
   - **Modo Livre** para testar qualquer trecho de código Java autoral.
 
@@ -46,7 +43,7 @@ Uma aplicação web moderna e interativa desenvolvida para apoiar atividades pr�
   - Ações rápidas: **Copiar**, **Limpar** e **Restaurar Código Inicial**.
 
 - **Persistência Automática (Local Storage)**:
-  - Salva rascunhos em tempo real individualmente por exercício e no modo livre (o código permanece intacto após recarregar a página ou dar F5).
+  - Salva rascunhos em tempo real individualmente por exercício e no modo livre.
   - Memorização do tema visual escolhido.
 
 - **Proteção e Alta Disponibilidade**:
@@ -55,24 +52,9 @@ Uma aplicação web moderna e interativa desenvolvida para apoiar atividades pr�
   - **Sistema de Cache SHA-256**: Respostas instantâneas para códigos e exercícios previamente analisados.
 
 - **Design e Acessibilidade**:
-  - Temas **Escuro (Dark Mode)** e **Claro (Light Mode)** com transições suaves.
+  - Temas **Escuro** e **Claro** com transições suaves.
   - Favicon transparente do Instituto Federal e micro-interações elegantes.
   - Aviso de transparência sobre uso de Inteligência Artificial.
-
----
-
-## Tecnologias
-
-- **[Java](https://www.oracle.com/java/)** (Linguagem foco das análises)
-- **[Next.js](https://nextjs.org/)** (App Router & Turbopack)
-- **[React](https://react.dev/)**
-- **[TypeScript](https://www.typescriptlang.org/)**
-- **[Tailwind CSS](https://tailwindcss.com/)**
-- **[java-parser](https://www.npmjs.com/package/java-parser)** (Parser e CST Java)
-- **[Groq SDK](https://groq.com/)** (Modelo `openai/gpt-oss-120b`)
-- **[PrismJS](https://prismjs.com/)** (Syntax Highlighting)
-- **[Canvas Confetti](https://www.npmjs.com/package/canvas-confetti)** (Efeitos visuais)
-- **[Lucide React](https://lucide.dev/)** (Ícones)
 
 ---
 
@@ -98,8 +80,6 @@ Crie um arquivo `.env` na raiz do projeto:
 # Você pode informar uma única chave ou múltiplas chaves separadas por vírgula para o Load Balancer
 GROQ_API_KEYS=gsk_chave1,gsk_chave2,gsk_chave3
 ```
-
-> Obtenha suas chaves de API gratuitamente no console da [Groq Cloud](https://console.groq.com/).
 
 ### 4. Execução em Desenvolvimento
 Inicie o servidor local:

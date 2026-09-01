@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useMemo, useEffect, KeyboardEvent } from 'react';
+import { useState, useRef, useMemo, useEffect, useCallback, KeyboardEvent } from 'react';
 import { Moon, Sun, Maximize2, Copy, Check, Trash2, X, FileCode, RotateCcw } from 'lucide-react';
 import { AppTheme } from '@/types';
 import Prism from 'prismjs';
@@ -33,12 +33,20 @@ function getCharCountColorClass(isAtLimit: boolean, isNearLimit: boolean, isDark
   return 'text-bnt-ink/40';
 }
 
-function getEditorContainerClasses(isExpanded: boolean, isDark: boolean): string {
+function getEditorContainerClasses(
+  isExpanded: boolean, 
+  isClosing: boolean, 
+  isReturning: boolean, 
+  isDark: boolean
+): string {
   const baseClasses = 'w-full rounded-2xl overflow-hidden border-2 flex flex-col transition-all';
   
   let layoutClasses = 'relative min-h-[380px] h-[380px] shadow-[4px_4px_0_0_var(--brutal-border)]';
   if (isExpanded) {
-    layoutClasses = 'fixed inset-3 sm:inset-6 md:inset-10 z-50 max-w-6xl mx-auto animate-editor-expand';
+    const anim = isClosing ? 'animate-editor-collapse pointer-events-none' : 'animate-editor-expand';
+    layoutClasses = `fixed inset-3 sm:inset-6 md:inset-10 z-50 max-w-6xl mx-auto ${anim}`;
+  } else if (isReturning) {
+    layoutClasses += ' animate-editor-return';
   }
 
   let themeClasses = 'border-bnt-ink bg-white';
@@ -74,10 +82,47 @@ export function CodeInput({
   maxLength = 5000 
 }: Readonly<CodeInputProps>) {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [isClosing, setIsClosing] = useState<boolean>(false);
+  const [isReturning, setIsReturning] = useState<boolean>(false);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const returnTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
+
+  const handleClose = useCallback(() => {
+    if (!isExpanded || isClosing) return;
+    setIsClosing(true);
+
+    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    if (returnTimeoutRef.current) clearTimeout(returnTimeoutRef.current);
+
+    closeTimeoutRef.current = setTimeout(() => {
+      setIsExpanded(false);
+      setIsClosing(false);
+      setIsReturning(true);
+
+      returnTimeoutRef.current = setTimeout(() => {
+        setIsReturning(false);
+      }, 250);
+    }, 220);
+  }, [isExpanded, isClosing]);
+
+  const handleToggleExpand = useCallback(() => {
+    if (isExpanded) {
+      handleClose();
+    } else {
+      setIsExpanded(true);
+    }
+  }, [isExpanded, handleClose]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+      if (returnTimeoutRef.current) clearTimeout(returnTimeoutRef.current);
+    };
+  }, []);
 
   const currentLength = value.length;
   const isNearLimit = currentLength > maxLength * 0.85;
@@ -126,7 +171,7 @@ export function CodeInput({
 
     const handleKeyDownEsc = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setIsExpanded(false);
+        handleClose();
       }
     };
 
@@ -136,7 +181,7 @@ export function CodeInput({
       document.body.style.overflow = originalOverflow;
       window.removeEventListener('keydown', handleKeyDownEsc);
     };
-  }, [isExpanded]);
+  }, [isExpanded, handleClose]);
 
   // Focus textarea when opening expanded mode
   useEffect(() => {
@@ -383,24 +428,36 @@ export function CodeInput({
         </span>
       </div>
 
-      {/* Backdrop for Expanded Modal Mode */}
+      {/* Backdrop for Expanded Modal Mode with Smooth Exit Animation */}
       {isExpanded && (
         <div 
           role="button"
           tabIndex={-1}
           aria-label="Fechar tela cheia"
-          className="fixed inset-0 bg-black/80 backdrop-blur-md z-40 animate-in fade-in duration-300 ease-out cursor-pointer"
-          onClick={() => setIsExpanded(false)}
+          className={`fixed inset-0 bg-black/80 backdrop-blur-md z-40 cursor-pointer ${
+            isClosing 
+              ? 'animate-editor-backdrop-collapse pointer-events-none' 
+              : 'animate-in fade-in duration-300 ease-out'
+          }`}
+          onClick={handleClose}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
-              setIsExpanded(false);
+              handleClose();
             }
           }}
         />
       )}
 
+      {/* Placeholder in normal flow while expanded to prevent page jumping */}
+      {isExpanded && (
+        <div 
+          aria-hidden="true" 
+          className="w-full min-h-[380px] h-[380px] rounded-2xl border-2 border-dashed border-transparent opacity-0 pointer-events-none" 
+        />
+      )}
+
       {/* Single Editor Container */}
-      <div className={getEditorContainerClasses(isExpanded, isDark)}>
+      <div className={getEditorContainerClasses(isExpanded, isClosing, isReturning, isDark)}>
         {/* Editor Toolbar */}
         <div 
           className={`px-4 py-3 shrink-0 flex flex-wrap items-center justify-between gap-2 border-b-2 transition-colors select-none ${
@@ -533,15 +590,15 @@ export function CodeInput({
             {/* Expand / Minimize / Close Button */}
             <button
               type="button"
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={handleToggleExpand}
               className={getExpandButtonClasses(isExpanded, isDark)}
               title={isExpanded ? 'Fechar tela cheia (ESC)' : 'Expandir editor em tela cheia'}
               aria-label={isExpanded ? 'Fechar tela cheia' : 'Expandir editor em tela cheia'}
             >
               {isExpanded ? (
-                <X className="w-4 h-4 text-red-400" />
+                <X className={`w-4 h-4 text-red-400 transition-transform duration-200 ${isClosing ? 'rotate-90 scale-75' : 'hover:scale-110 active:scale-95'}`} />
               ) : (
-                <Maximize2 className={`w-4 h-4 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                <Maximize2 className={`w-4 h-4 ${isDark ? 'text-emerald-400' : 'text-emerald-600'} hover:scale-110 active:scale-95 transition-transform`} />
               )}
             </button>
           </div>

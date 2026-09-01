@@ -96,11 +96,11 @@ summary {
   box-shadow: var(--brutal-shadow);
 }
 
-/* === EXPAND MODAL ANIMATION === */
+/* === EXPAND MODAL & CLOSING ANIMATIONS === */
 @keyframes editorExpand {
   0% {
     opacity: 0;
-    transform: scale(0.92) translateY(12px);
+    transform: scale(0.94) translateY(10px);
   }
 
   100% {
@@ -110,7 +110,53 @@ summary {
 }
 
 .animate-editor-expand {
-  animation: editorExpand 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: editorExpand 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes editorCollapse {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+}
+
+.animate-editor-collapse {
+  animation: editorCollapse 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes editorBackdropFadeOut {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-editor-backdrop-collapse {
+  animation: editorBackdropFadeOut 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes editorInlineReturn {
+  0% {
+    opacity: 0.75;
+    transform: scale(0.985);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-editor-return {
+  animation: editorInlineReturn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* === TITLE GRADIENT SHIMMER ANIMATION === */

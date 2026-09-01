@@ -1,4 +1,4 @@
-import { Loader2, Sparkles, Timer } from 'lucide-react';
+import { Loader2, Timer } from 'lucide-react';
 import { AppTheme } from '@/types';
 
 interface AnalyzeButtonProps {
@@ -64,10 +64,7 @@ export function AnalyzeButton({
         </>
       )}
       {!isBusy && !isCoolingDown && (
-        <>
-          <Sparkles className="w-5 h-5" />
-          <span>Analisar Clean Code</span>
-        </>
+        <span>Analisar Clean Code</span>
       )}
     </button>
   );
