@@ -2,50 +2,56 @@ import java.util.Scanner;
 
 public class Dirty {
     public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
+        Scanner s = new Scanner(System.in);
+        int opc = 1;
 
-        double d = 500.0;
-        boolean f = true;
+        // repete o menu
+        while (opc != 0) {
+            System.out.println("1-Avaliar Aluno | 0-Sair");
+            opc = s.nextInt();
 
-        System.out.println("--- BEM VINDO ---");
+            if (opc == 1) {
+                System.out.println("Nome:");
+                String n = s.next();
+                System.out.println("Faltas:");
+                int f = s.nextInt();
+                
+                System.out.println("N1:");
+                double n1 = s.nextDouble();
+                System.out.println("N2:");
+                double n2 = s.nextDouble();
+                System.out.println("N3:");
+                double n3 = s.nextDouble();
 
-        while(f == true) {
-            System.out.println("Escolha: 1 p/ botar, 2 p/ tirar, 3 p/ olhar, 4 p/ sair");
-            int o = sc.nextInt();
+                // faz a conta da nota
+                double res = (n1 + n2 + n3) / 3;
 
-            if(o == 1) {
-                System.out.print("Qto? ");
-                double v = sc.nextDouble();
-                if(v > 0) {
-                    d = d + v;
-                    System.out.println("Ok, feito.");
-                } else {
-                    System.out.println("Erro.");
-                }
-            } else {
-                if(o == 2) {
-                    System.out.print("Qto? ");
-                    double v = sc.nextDouble();
-                    
-                    if(d - v < -300) {
-                        System.out.println("Nao da, sem limite.");
+                int x = 0; // flag auxiliar para o sistema futuro
+
+                if (f <= 15) {
+                    if (res >= 7.0) {
+                        System.out.println("O aluno " + n + " passou direto! Nota: " + res);
                     } else {
-                        d = d - v;
-                        System.out.println("Ok, feito.");
-                    }
-                } else {
-                    if(o == 3) {
-                        System.out.println("Vc tem: " + d);
-                    } else {
-                        if(o == 4) {
-                            System.out.println("Tchau");
-                            f = false;
+                        if (res >= 5.0) {
+                            System.out.println("Aluno em Recuperação. Digite a nota da prova:");
+                            double n4 = s.nextDouble();
+                            
+                            double res2 = (res + n4) / 2;
+                            
+                            if (res2 >= 6.0) {
+                                System.out.println("Passou na rec.");
+                            } else {
+                                System.out.println("Reprovou na rec.");
+                            }
                         } else {
-                            System.out.println("Opcao invalida");
+                            System.out.println("Reprovado direto por nota.");
                         }
                     }
+                } else {
+                    System.out.println("Reprovado por falta.");
                 }
             }
         }
+        s.close();
     }
 }

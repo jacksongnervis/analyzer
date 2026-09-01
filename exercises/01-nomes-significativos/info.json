@@ -3,10 +3,10 @@
   "title": "1. Nomes Significativos e Clareza",
   "category": "Nomenclatura",
   "difficulty": "Iniciante",
-  "description": "Variáveis com nomes crípticos de uma só letra (d, f, o, v) e termos informais tornam a lógica do caixa eletrônico difícil de acompanhar. Refatore os nomes para revelar a real intenção de cada variável e elemento do código.",
+  "description": "Variáveis com nomes crípticos ou abreviações (n, f, n1, res, opc) tornam a lógica do diário de classe difícil de acompanhar. Refatore os nomes para revelar a real intenção de cada variável e elemento do código.",
   "objectives": [
-    "As variáveis (como d, f, o, v) são entendíveis apenas pelo seu nome e revelam claramente a sua função?",
-    "O nome da classe e do pacote explicam de forma clara qual é o propósito do código e o domínio do problema?",
-    "As mensagens exibidas para o usuário são profissionais, claras e fáceis de entender?"
+    "As variáveis (como n, f, res, opc) são entendíveis apenas pelo seu nome e revelam claramente a sua função (ex: nome, faltas, media, opcao)?",
+    "O nome da classe principal (como sis_escola) está no padrão correto (PascalCase) e explica claramente o propósito do programa?",
+    "As mensagens exibidas para o usuário são profissionais, claras e comunicam a situação escolar do aluno de forma compreensível?"
   ]
 }

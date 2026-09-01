@@ -2,109 +2,71 @@ import java.util.Scanner;
 
 public class Clean {
 
-    private static final int OPCAO_DEPOSITAR = 1;
-    private static final int OPCAO_SACAR = 2;
-    private static final int OPCAO_VER_SALDO = 3;
-    private static final int OPCAO_SAIR = 4;
-
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        
+        final int OPCAO_SAIR = 0;
+        final int OPCAO_AVALIAR = 1;
+        
+        final int LIMITE_FALTAS = 15;
+        final double MEDIA_APROVACAO = 7.0;
+        final double MEDIA_RECUPERACAO = 5.0;
+        final double MEDIA_APROVACAO_RECUPERACAO = 6.0;
 
-        ContaBancaria conta = new ContaBancaria(500.0, 300.0);
-        boolean executando = true;
+        int opcao = OPCAO_AVALIAR;
 
-        System.out.println("--- CAIXA ELETRÔNICO ---");
+        while (opcao != OPCAO_SAIR) {
+            System.out.println("\n1 - Avaliar Aluno | 0 - Sair");
+            opcao = scanner.nextInt();
 
-        while (executando) {
-            exibirMenu();
-            int opcaoEscolhida = scanner.nextInt();
-
-            try {
-                switch (opcaoEscolhida) {
-                    case OPCAO_DEPOSITAR:
-                        System.out.print("Qual valor deseja depositar? R$ ");
-                        double valorDeposito = scanner.nextDouble();
-                        conta.depositar(valorDeposito);
-                        System.out.println("✅ Depósito realizado com sucesso!");
-                        break;
-
-                    case OPCAO_SACAR:
-                        System.out.print("Qual valor deseja sacar? R$ ");
-                        double valorSaque = scanner.nextDouble();
-                        conta.sacar(valorSaque);
-                        System.out.println("✅ Saque realizado com sucesso!");
-                        break;
-
-                    case OPCAO_VER_SALDO:
-                        System.out.printf("💰 Seu saldo atual é: R$ %.2f\n", conta.getSaldo());
-                        break;
-
-                    case OPCAO_SAIR:
-                        System.out.println("Obrigado por usar nosso banco. Até logo!");
-                        executando = false;
-                        break;
-
-                    default:
-                        System.out.println("⚠️ Opção inválida. Tente novamente.");
-                        break;
-                }
-            } catch (IllegalArgumentException e) {
-                System.out.println("❌ Erro: " + e.getMessage());
+            if (opcao != OPCAO_AVALIAR) {
+                continue;
             }
 
-            System.out.println("------------------------");
-        }
+            System.out.print("Nome: ");
+            String nome = scanner.next();
+            
+            System.out.print("Faltas: ");
+            int faltas = scanner.nextInt();
+            
+            System.out.print("Nota 1: ");
+            double nota1 = scanner.nextDouble();
+            
+            System.out.print("Nota 2: ");
+            double nota2 = scanner.nextDouble();
+            
+            System.out.print("Nota 3: ");
+            double nota3 = scanner.nextDouble();
 
+            double mediaSemestral = (nota1 + nota2 + nota3) / 3.0;
+            
+            if (faltas > LIMITE_FALTAS) {
+                System.out.println("O aluno " + nome + " reprovou por falta.");
+                continue;
+            }
+
+            if (mediaSemestral >= MEDIA_APROVACAO) {
+                System.out.println("O aluno " + nome + " passou direto! Média: " + mediaSemestral);
+                continue;
+            }
+
+            if (mediaSemestral < MEDIA_RECUPERACAO) {
+                System.out.println("O aluno " + nome + " reprovou direto por nota. Média: " + mediaSemestral);
+                continue;
+            }
+
+            System.out.println("Aluno em Recuperação. Digite a nota da prova:");
+            double notaRecuperacao = scanner.nextDouble();
+            
+            double mediaFinal = (mediaSemestral + notaRecuperacao) / 2.0;
+            
+            if (mediaFinal >= MEDIA_APROVACAO_RECUPERACAO) {
+                System.out.println("Passou na recuperação! Média final: " + mediaFinal);
+            } else {
+                System.out.println("Reprovou na recuperação. Média final: " + mediaFinal);
+            }
+        }
+        
         scanner.close();
-    }
-
-    private static void exibirMenu() {
-        System.out.println("\nEscolha uma opção:");
-        System.out.println("1 - Depositar");
-        System.out.println("2 - Sacar");
-        System.out.println("3 - Ver Saldo");
-        System.out.println("4 - Sair");
-        System.out.print("Sua opção: ");
-    }
-}
-
-class ContaBancaria {
-    private double saldo;
-    private final double limiteChequeEspecial;
-
-    public ContaBancaria(double saldoInicial, double limiteChequeEspecial) {
-        if (saldoInicial < 0) {
-            throw new IllegalArgumentException("O saldo inicial não pode ser negativo.");
-        }
-        if (limiteChequeEspecial < 0) {
-            throw new IllegalArgumentException("O limite não pode ser negativo.");
-        }
-        this.saldo = saldoInicial;
-        this.limiteChequeEspecial = limiteChequeEspecial;
-    }
-
-    public void depositar(double valor) {
-        if (valor <= 0) {
-            throw new IllegalArgumentException("O valor de depósito deve ser maior que zero.");
-        }
-        this.saldo += valor;
-    }
-
-    public void sacar(double valor) {
-        if (valor <= 0) {
-            throw new IllegalArgumentException("O valor de saque deve ser maior que zero.");
-        }
-
-        double saldoDisponivelTotal = this.saldo + this.limiteChequeEspecial;
-
-        if (valor > saldoDisponivelTotal) {
-            throw new IllegalArgumentException("Saldo insuficiente. Limite do cheque especial excedido.");
-        }
-
-        this.saldo -= valor;
-    }
-
-    public double getSaldo() {
-        return this.saldo;
     }
 }
