@@ -1,16 +1,30 @@
-# ☕ Java Clean Code Analyzer
+<div align="center">
+  <h1>Clean Code Analyzer</h1>
 
-Uma aplicação web moderna e interativa desenvolvida para apoiar atividades práticas sobre **Clean Code** e boas práticas em Java. O sistema avalia códigos enviados por alunos ou desenvolvedores com base em legibilidade, manutenibilidade, responsabilidade única (SRP) e detecção de *code smells*, fornecendo pontuação didática (0 a 10), lista de problemas e dicas práticas de refatoração usando Inteligência Artificial de alta velocidade (Groq Cloud).
+  <p>
+    <img src="https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=java&logoColor=white" alt="Java" />
+    <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" />
+    <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
+    <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="MIT License" />
+  </p>
+</div>
 
 ---
 
-## 🚀 Funcionalidades
+## Sobre o Projeto
+
+Uma aplicação web moderna e interativa desenvolvida para apoiar atividades práticas sobre **Clean Code** e boas práticas em Java. O sistema avalia códigos enviados por alunos ou desenvolvedores com base em legibilidade, manutenibilidade, responsabilidade única e detecção de *code smells*, fornecendo pontuação didática (0 a 10), lista de problemas e dicas práticas de refatoração usando Inteligência Artificial.
+
+---
+
+## Funcionalidades
 
 - **Avaliação Pedagógica com IA**:
   - Pontuação de Clean Code de 0 a 10 com feedback visual imediato.
   - Identificação precisa de *bad smells* (nomenclatura confusa, funções longas, números mágicos, aninhamento profundo, duplicação, etc.).
   - Dica principal de refatoração do instrutor personalizada para cada código.
-  - Chuva de confetes comemorativa para notas de excelência (9 e 10).
+  - Efeito comemorativo de confetes para notas de excelência (9 e 10).
 
 - **Validação Sintática com Parser Java (`java-parser`)**:
   - Utiliza o motor AST oficial do Java para validar o código antes de acionar a IA.
@@ -18,7 +32,7 @@ Uma aplicação web moderna e interativa desenvolvida para apoiar atividades pr�
   - **Inspeção Semântica da CST**: Bloqueia cascas vazias, classes sem lógica ou meras declarações de imports/campos para evitar desperdício de tokens.
 
 - **Exercícios Práticos Guiados**:
-  - Lista de desafios graduais divididos por níveis de dificuldade: **Iniciante**, **Intermediário**, **Avançado** e **Desafio ("O Chefão")**.
+  - Lista de desafios graduais divididos por níveis de dificuldade: **Iniciante**, **Intermediário**, **Avançado** e **Desafio**.
   - Comparação contextual com gabaritos de referência do professor em cada exercício.
   - **Modo Livre** para testar qualquer trecho de código Java autoral.
 
@@ -29,7 +43,7 @@ Uma aplicação web moderna e interativa desenvolvida para apoiar atividades pr�
   - Ações rápidas: **Copiar**, **Limpar** e **Restaurar Código Inicial**.
 
 - **Persistência Automática (Local Storage)**:
-  - Salva rascunhos em tempo real individualmente por exercício e no modo livre (o código permanece intacto após recarregar a página ou dar F5).
+  - Salva rascunhos em tempo real individualmente por exercício e no modo livre.
   - Memorização do tema visual escolhido.
 
 - **Proteção e Alta Disponibilidade**:
@@ -37,28 +51,14 @@ Uma aplicação web moderna e interativa desenvolvida para apoiar atividades pr�
   - **Cooldown Anti-Spam de 60s**: Contador regressivo visível diretamente no botão de análise com persistência contra F5.
   - **Sistema de Cache SHA-256**: Respostas instantâneas para códigos e exercícios previamente analisados.
 
-- **Design Premium e Acessível**:
-  - Temas **Escuro (Dark Mode)** e **Claro (Light Mode)** com transições suaves.
+- **Design e Acessibilidade**:
+  - Temas **Escuro** e **Claro** com transições suaves.
   - Favicon transparente do Instituto Federal e micro-interações elegantes.
   - Aviso de transparência sobre uso de Inteligência Artificial.
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
-
-- **[Next.js](https://nextjs.org/)** (App Router & Turbopack)
-- **[React](https://react.dev/)**
-- **[TypeScript](https://www.typescriptlang.org/)**
-- **[Tailwind CSS](https://tailwindcss.com/)**
-- **[java-parser](https://www.npmjs.com/package/java-parser)** (Parser e CST Java)
-- **[Groq SDK](https://groq.com/)** (Modelo `openai/gpt-oss-120b`)
-- **[PrismJS](https://prismjs.com/)** (Syntax Highlighting)
-- **[Canvas Confetti](https://www.npmjs.com/package/canvas-confetti)** (Efeitos visuais)
-- **[Lucide React](https://lucide.dev/)** (Ícones)
-
----
-
-## 📦 Como Executar o Projeto
+## Como Executar o Projeto
 
 ### 1. Pré-requisitos
 - [Node.js](https://nodejs.org/) (versão 18 ou superior)
@@ -81,8 +81,6 @@ Crie um arquivo `.env` na raiz do projeto:
 GROQ_API_KEYS=gsk_chave1,gsk_chave2,gsk_chave3
 ```
 
-> Obtenha suas chaves de API gratuitamente no console da [Groq Cloud](https://console.groq.com/).
-
 ### 4. Execução em Desenvolvimento
 Inicie o servidor local:
 
@@ -102,7 +100,7 @@ npm run start
 
 ---
 
-## 📂 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```text
 ├── exercises/                  # Definição dos exercícios guiados e gabaritos
@@ -136,7 +134,7 @@ npm run start
 
 ---
 
-## 👥 Criadores & Oficineiros
+## Equipe e Criadores
 
 Projeto desenvolvido para a oficina prática sobre **Clean Code em Java** pelos alunos de **Tecnologia em Análise e Desenvolvimento de Sistemas (TADS - Turma 4A)**:
 
@@ -147,6 +145,6 @@ Projeto desenvolvido para a oficina prática sobre **Clean Code em Java** pelos 
 
 ---
 
-## 📄 Licença
+## Licença
 
 Este projeto está sob a licença [MIT](LICENSE).
