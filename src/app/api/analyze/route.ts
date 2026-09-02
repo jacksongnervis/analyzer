@@ -194,9 +194,8 @@ export async function POST(request: Request) {
       return attachSession(similarResponse, sessionId);
     }
 
-    // 6. Cache por Hash SHA-256 (inclui o exerciseId se houver para evitar colisões com modo livre)
-    const cacheKey = exercise ? `${sanitizedCode}_ex_${exercise.id}` : sanitizedCode;
-    const codeHash = getCodeHash(cacheKey);
+    // 6. Verificação do cache em memória (SHA-256 isolado por exercício)
+    const codeHash = getCodeHash(sanitizedCode, currentExerciseId);
     const cachedResult = getCachedAnalysis(codeHash);
 
     if (cachedResult) {
@@ -244,7 +243,12 @@ Objetivo: ${exercise.description}
 Critérios esperados:
 ${exercise.objectives.map(obj => `- ${obj}`).join('\n')}
 
-Gabarito ideal de referência:
+DIRETRIZ CRUCIAL DE ESCOPO E ARQUITETURA PARA ESTE EXERCÍCIO:
+- O nível de arquitetura e abstração esperado para este exercício é EXATAMENTE o do gabarito abaixo.
+- Se o gabarito do professor estiver contido em uma única classe (como neste exercício), É ESTRITAMENTE PROIBIDO apontar "God Class" ou exigir a criação de novas classes (como classe Aluno, etc.).
+- Avalie se o aluno cumpriu os objetivos específicos deste exercício (${exercise.category}). Se a solução do aluno for equivalente em clareza ao gabarito, atribua NOTA 10.
+
+Gabarito ideal de referência do professor:
 ${exercise.expectedCleanCode}
 </gabarito_do_professor_para_comparacao>`;
     }

@@ -24,9 +24,10 @@ export function getCanonicalCode(code: string): string {
     .trim();
 }
 
-export function getCodeHash(code: string): string {
+export function getCodeHash(code: string, exerciseId?: string | null): string {
   const canonicalCode = getCanonicalCode(code);
-  return createHash('sha256').update(canonicalCode).digest('hex');
+  const prefix = exerciseId ? `v2:${exerciseId}:` : 'v2:free:';
+  return createHash('sha256').update(prefix + canonicalCode).digest('hex');
 }
 
 export function getCachedAnalysis(hash: string): AnalysisResult | null {

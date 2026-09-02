@@ -3,7 +3,7 @@
   "title": "1. Nomes Significativos e Clareza",
   "category": "Nomenclatura",
   "difficulty": "Iniciante",
-  "description": "Variáveis com nomes crípticos e abreviações tornam a lógica do diário de classe confusa e difícil de acompanhar. Além de refatorar os nomes para revelar a real intenção de cada elemento, você também precisa limpar o código utilizando os padrões de Clean Code.",
+  "description": "Variáveis com nomes crípticos e abreviações tornam a lógica do diário de classe confusa e difícil de acompanhar. Por isso, precisamos refatorar os nomes para revelar a real intenção de cada elemento, você também precisa limpar o código utilizando os padrões de Clean Code.",
   "objectives": [
     "As variáveis são entendíveis apenas pelo seu nome e revelam claramente a sua função?",
     "O nome da classe principal está no padrão correto e explica claramente o propósito do programa?",

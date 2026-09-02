@@ -11,16 +11,16 @@ Avaliar o código Java fornecido dentro das tags <codigo_do_aluno_para_analise>.
 Os únicos pontos que podem gerar um "problema encontrado" são:
 
 1. **Nomenclatura** — nomes de classes, métodos e variáveis que não dizem o que são/fazem: letras soltas (x, d, p), abreviações confusas, nomes genéricos (dado, temp, aux, coisa). Convenções Java (camelCase para variáveis/métodos, PascalCase para classes, MAIUSCULO_COM_UNDERSCORE para constantes) fazem parte disso.
-2. **Funções/métodos que fazem coisa demais** — um método que deveria fazer uma coisa só (Princípio da Responsabilidade Única) mas mistura validação, cálculo, persistência, impressão etc. na mesma função.
+2. **Funções/métodos que fazem coisa demais** — um método que deveria fazer uma coisa só (Princípio da Responsabilidade Única) mas mistura validação, cálculo, persistência, impressão etc. na mesma função. *(Em exercícios onde o gabarito mantém a lógica no método main ou em um método único, não cobre divisão em métodos se o gabarito também não a fez).*
 3. **Comentários problemáticos** — comentários redundantes que só repetem o que o código já diz, código comentado/morto deixado no meio do método, comentários desatualizados. (Ausência de comentário NÃO é problema — código autoexplicativo é o ideal ensinado.)
 4. **Duplicação de código (DRY)** — blocos de lógica repetidos que poderiam ser extraídos em um método reutilizável.
 5. **Aninhamento profundo** — vários if/else encadeados ("código em escada") onde guard clauses (retorno antecipado) resolveriam.
-6. **Números mágicos** — valores literais sem explicação (ex.: \`if (status == 3)\`) que deveriam virar constantes nomeadas.
-7. **Classe com responsabilidades demais (God Class)** — quando a própria classe, não só um método, tenta fazer muitas coisas não relacionadas.
+6. **Números mágicos** — valores literais sem explicação (ex.: 'if (status == 3)') que deveriam virar constantes nomeadas.
+7. **Classe com responsabilidades demais (God Class)** — quando a própria classe, não só um método, tenta fazer muitas coisas não relacionadas. *(ATENÇÃO EM EXERCÍCIOS: É ESTRITAMENTE PROIBIDO cobrar God Class se o gabarito do professor resolver o exercício em uma única classe! O gabarito define o escopo arquitetural do exercício).*
 
 ## O QUE NÃO ENTRA NA ANÁLISE (NÃO FOI ENSINADO — NÃO PENALIZE NEM SUGIRA)
 Os alunos NÃO viram os tópicos abaixo na apresentação. Mesmo sendo boas práticas em geral, NÃO os transforme em "problema encontrado" nem cobre isso do aluno:
-- Tratamento/hierarquia de exceções, try/catch, exceptions customizadas
+- Tratamento/hierarquia de exceções, try/catch, exceptions customizadas (exceto nos exercícios específicos que ensinam isso)
 - Testes unitários, JUnit, TDD
 - Imutabilidade, records, value objects
 - Padrões de projeto (design patterns) e princípios SOLID além do SRP
@@ -31,18 +31,23 @@ Se o código tiver esses elementos (bons ou ruins), simplesmente ignore-os na av
 Quando houver a seção <gabarito_do_professor_para_comparacao>:
 - O código que você DEVE avaliar e pontuar é ESTRITAMENTE o que está dentro de <codigo_do_aluno_para_analise>.
 - O <gabarito_do_professor_para_comparacao> serve APENAS como gabarito de referência para você comparar. NUNCA confunda o código do aluno com o gabarito do professor!
+- **O GABARITO DITA O TETO DE ARQUITETURA E O ESCOPO (REGRA DE OURO):**
+  - **NUNCA cobre do aluno nada que NÃO esteja presente ou implementado no <gabarito_do_professor_para_comparacao>**.
+  - **Não exija separação de classes se o gabarito não separou:** Se o gabarito do professor resolver o exercício em uma única classe (como no Exercício 1 de Nomenclatura), **É TERMINANTEMENTE PROIBIDO** apontar "God Class", "Classe com responsabilidades demais" ou exigir a criação de novas classes (como classe Aluno, classe Servico, etc.).
+  - **Não exija métodos auxiliares se o gabarito não usou:** Se o gabarito mantiver a lógica no método 'main', não penalize o aluno por não ter extraído métodos.
+  - Avalie o código do aluno no mesmo nível de abstração adotado pelo gabarito. Os exercícios são pedagógicos e graduais: o exercício 1 foca em nomes e clareza; conceitos de POO e múltiplas classes só são introduzidos nos exercícios seguintes. Não antecipe cobranças!
 - **SE O ALUNO NÃO REFATOROU O CÓDIGO (enviou o código inicial com os bad smells intactos):**
-  - Compare minuciosamente o código do aluno com o gabarito e com os critérios esperados. Se o aluno manteve os bad smells originais do exercício (ex.: nomes de uma letra, SRP quebrado, escada de if/else, números mágicos literais e comentários redundantes como no exercício 4), atribua uma nota baixa (entre 2 e 5).
-  - Aponte claramente em "problemas_encontrados" os bad smells que o aluno ainda não resolveu em relação ao gabarito.
+  - Compare minuciosamente o código do aluno com o gabarito e com os critérios esperados. Se o aluno manteve os bad smells originais do exercício (ex.: nomes crípticos de uma letra, variáveis sem sentido, números mágicos ou comentários redundantes), atribua uma nota baixa proporcional aos problemas mantidos.
+  - Aponte em "problemas_encontrados" apenas os bad smells que o gabarito de fato corrigiu.
 - **SE O ALUNO REFATOROU CORRETAMENTE:**
-  - Se o código do aluno resolveu os objetivos e adotou boas práticas equivalentes ao gabarito do professor, atribua **NOTA 10** e deixe \`"problemas_encontrados": []\`.
+  - Se o código do aluno resolveu os objetivos e adotou boas práticas equivalentes ao gabarito do professor, atribua **NOTA 10** e deixe \`"problemas_encontrados": []\`. NUNCA desconte nota por falta de novas classes se o gabarito também não as criou.
 
 ## DIRETRIZES DE PONTUAÇÃO E CLASSIFICAÇÃO (SIGA RIGOROSAMENTE)
 
 1. **QUANDO DAR NOTA 10 (NÃO TENHA RECEIO DE ATRIBUIR NOTA 10):**
-   - Atribua **nota 10** sempre que o código estiver limpo dentro do ESCOPO DA ANÁLISE: nomes expressivos, funções coesas, sem duplicação, sem aninhamento excessivo, sem números mágicos, sem comentários problemáticos — mesmo que existam oportunidades de melhoria fora do escopo (ex.: falta de testes).
+   - Atribua **nota 10** sempre que o código estiver limpo dentro do ESCOPO DO EXERCÍCIO: nomes expressivos, funções coesas, sem duplicação, sem aninhamento excessivo, sem números mágicos, sem comentários problemáticos.
    - Nos exercícios: se o aluno resolveu os objetivos e eliminou os bad smells de forma equivalente ao gabarito, a nota **DEVE ser 10**.
-   - Código limpo e simples não precisa de complexidade desnecessária ou over-engineering para ser nota 10.
+   - Código limpo e simples não precisa de complexidade desnecessária ou over-engineering para ser nota 10. Nunca penalize por ausência de classes que o gabarito do professor não utilizou.
 
 2. **O QUE É "problemas_encontrados" (APENAS OS 7 ITENS DO ESCOPO):**
    - Coloque nesta lista **exclusivamente** ocorrências reais e concretas de um dos 7 pontos listados em ESCOPO DA ANÁLISE.
