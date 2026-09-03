@@ -2,6 +2,7 @@ import Groq from 'groq-sdk';
 import {
   isOpenRouterConfigured,
   callOpenRouterAnalysis,
+  getOpenRouterModel,
   getOpenRouterModels,
 } from './openRouter';
 
@@ -121,11 +122,13 @@ function releaseConcurrencySlot(): void {
 }
 
 /**
- * Executa a chamada à IA com arquitetura híbrida de resiliência:
- * 1. Tenta o pool da Groq (Tier 1 - gratuito e rápido) com Round-Robin e Failover entre chaves.
- * 2. Se a Groq retornar Rate Limit (429) ou estiver indisponível, aciona imediatamente
- *    o OpenRouter (Tier 2 - fallback de alta capacidade com DeepSeek).
- * 3. Se não houver chaves da Groq configuradas, encaminha diretamente para o OpenRouter.
+ * Executa a chamada à IA com arquitetura balanceada e failover imediato:
+ * 1. O algoritmo Round-Robin seleciona uma chave Groq para a requisição.
+ * 2. Se a chave da Groq responder com sucesso, retorna imediatamente (~0.5s).
+ * 3. Se a chave da Groq falhar ou atingir Rate Limit (429), NÃO perde tempo testando
+ *    outras chaves da Groq em série (que também estariam saturadas no mesmo segundo):
+ *    aciona IMEDIATAMENTE o OpenRouter (DeepSeek) como fallback transparente!
+ * 4. Se não houver chaves da Groq configuradas, encaminha diretamente para o OpenRouter.
  */
 export async function runLoadBalancedAnalysis({
   systemPrompt,
@@ -149,82 +152,83 @@ export async function runLoadBalancedAnalysis({
       return await callOpenRouterAnalysis({ systemPrompt, userMessage });
     }
 
-    // Caso 2: Tenta executar via Groq (Tier 1) com Round-Robin entre as chaves
-    const startIndex = currentKeyIndex % groqKeys.length;
+    // Caso 2: Round-Robin seleciona a chave Groq desta requisição
+    const selectedKeyIndex = currentKeyIndex % groqKeys.length;
     currentKeyIndex = (currentKeyIndex + 1) % groqKeys.length;
 
-    const orderedKeys = [
-      ...groqKeys.slice(startIndex),
-      ...groqKeys.slice(0, startIndex),
-    ];
+    const apiKey = groqKeys[selectedKeyIndex];
+    const client = getGroqClient(apiKey);
 
-    let lastGroqError: unknown = null;
+    try {
+      const completion = await client.chat.completions.create({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage },
+        ],
+        model: GROQ_MODEL_NAME,
+        temperature: 0.1,
+        response_format: { type: 'json_object' },
+      });
 
-    for (let i = 0; i < orderedKeys.length; i++) {
-      const apiKey = orderedKeys[i];
-      const client = getGroqClient(apiKey);
+      const content = completion.choices[0]?.message?.content;
+      if (content) {
+        return content;
+      }
+    } catch (groqErr: unknown) {
+      const isRateLimit =
+        (typeof groqErr === 'object' &&
+          groqErr !== null &&
+          'status' in groqErr &&
+          (groqErr as { status: number }).status === 429) ||
+        (groqErr instanceof Error && groqErr.message.includes('429'));
 
-      try {
-        const completion = await client.chat.completions.create({
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage },
-          ],
-          model: GROQ_MODEL_NAME,
-          temperature: 0.1,
-          response_format: { type: 'json_object' },
-        });
-
-        const content = completion.choices[0]?.message?.content;
-        if (content) {
-          return content;
-        }
-      } catch (err: unknown) {
-        lastGroqError = err;
-        const isRateLimit =
-          (typeof err === 'object' &&
-            err !== null &&
-            'status' in err &&
-            (err as { status: number }).status === 429) ||
-          (err instanceof Error && err.message.includes('429'));
-
+      // Se o OpenRouter estiver ativo, aciona IMEDIATAMENTE o DeepSeek sem perder tempo com outras chaves Groq saturadas
+      if (openRouterActive) {
+        const modelName = getOpenRouterModel();
         console.warn(
-          `[Groq Load Balancer] Chave ${i + 1}/${orderedKeys.length} falhou (${
-            isRateLimit ? 'Rate Limit 429' : 'Erro'
-          }).`
+          `[AI Failover] Chave Groq #${selectedKeyIndex + 1} atingiu ${
+            isRateLimit ? 'Rate Limit (429)' : 'Erro'
+          }. Acionando fallback direto para OpenRouter (${modelName})...`
         );
+        return await callOpenRouterAnalysis({ systemPrompt, userMessage });
+      }
 
-        // Se houver mais chaves no pool Groq, tenta a próxima chave
-        if (i < orderedKeys.length - 1) {
-          console.warn('[Groq Load Balancer] Acionando failover para a próxima chave Groq...');
+      // Se OpenRouter NÃO estiver configurado, aí sim tenta as outras chaves Groq como plano de emergência
+      console.warn(
+        `[Groq Load Balancer] Chave Groq #${selectedKeyIndex + 1} falhou (${
+          isRateLimit ? 'Rate Limit 429' : 'Erro'
+        }). Tentando chaves secundárias...`
+      );
+
+      const remainingKeys = [
+        ...groqKeys.slice(selectedKeyIndex + 1),
+        ...groqKeys.slice(0, selectedKeyIndex),
+      ];
+
+      for (let i = 0; i < remainingKeys.length; i++) {
+        const backupKey = remainingKeys[i];
+        const backupClient = getGroqClient(backupKey);
+        try {
+          const comp = await backupClient.chat.completions.create({
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userMessage },
+            ],
+            model: GROQ_MODEL_NAME,
+            temperature: 0.1,
+            response_format: { type: 'json_object' },
+          });
+          const c = comp.choices[0]?.message?.content;
+          if (c) return c;
+        } catch {
           continue;
         }
       }
+
+      throw groqErr;
     }
 
-    // Caso 3: Todas as chaves Groq falharam ou atingiram Rate Limit
-    if (openRouterActive) {
-      const modelChain = getOpenRouterModels().join(' -> ');
-      console.warn(
-        `[AI Failover] Todas as chaves Groq falharam ou atingiram limite de taxa (429). Redirecionando automaticamente para OpenRouter (${modelChain})...`
-      );
-      try {
-        const openRouterResponse = await callOpenRouterAnalysis({
-          systemPrompt,
-          userMessage,
-        });
-        return openRouterResponse;
-      } catch (openRouterError) {
-        console.error('[AI Failover] Erro também no fallback do OpenRouter:', openRouterError);
-        throw openRouterError;
-      }
-    }
-
-    // Sem OpenRouter configurado para fallback
-    throw (
-      lastGroqError ||
-      new Error('Todas as chaves da API Groq estão temporariamente indisponíveis.')
-    );
+    throw new Error('Resposta vazia da API Groq.');
   } finally {
     // Libera a vaga no semáforo para a próxima requisição na fila
     releaseSlot();
