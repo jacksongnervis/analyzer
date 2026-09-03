@@ -9,6 +9,10 @@ const ONLY_COMMENTS_REASON =
   'O código fornecido contém apenas comentários.';
 const NO_SUBSTANCE_REASON =
   'O código enviado é sintaticamente válido, mas não tem nenhuma instrução para analisar (ex.: classe vazia, só um campo, import ou assinatura de método sem corpo). Envie um trecho com pelo menos uma linha de lógica.';
+const ONLY_PRINTS_REASON =
+  'O código enviado contém apenas impressões simples de texto (System.out.print) e nenhuma regra de negócio ou lógica para ser avaliada sob os critérios de Clean Code. Envie uma implementação com lógica de programação real.';
+const TRIVIAL_EXERCISE_REASON =
+  'O código enviado foi excessivamente reduzido e não implementa as regras de negócio do exercício. Refatore o código original mantendo as funcionalidades do programa em vez de apagá-lo.';
 
 const KEY_SPAM_REGEX = /([a-z])\1{20,}/i;
 
@@ -21,6 +25,7 @@ const VALID_RESULT: JavaHeuristicResult = { isValid: true };
 const NOT_JAVA_RESULT: JavaHeuristicResult = { isValid: false, reason: NOT_JAVA_REASON };
 const ONLY_COMMENTS_RESULT: JavaHeuristicResult = { isValid: false, reason: ONLY_COMMENTS_REASON };
 const NO_SUBSTANCE_RESULT: JavaHeuristicResult = { isValid: false, reason: NO_SUBSTANCE_REASON };
+const ONLY_PRINTS_RESULT: JavaHeuristicResult = { isValid: false, reason: ONLY_PRINTS_REASON };
 
 const FRAGMENT_ENTRY_POINTS = ['compilationUnit', 'classBodyDeclaration'] as const;
 
@@ -61,7 +66,23 @@ function stripComments(code: string): string {
     .trim();
 }
 
-function parseAsJava(trimmed: string): CstNode | null {
+function isTrivialPrintOnlyCode(code: string): boolean {
+  const clean = stripComments(code);
+  // Remove chamadas de System.out.print / println / printf
+  const withoutPrints = clean.replace(/System\s*\.\s*out\s*\.\s*(?:println|print|printf)\s*\([^;]*\)\s*;/g, '').trim();
+
+  // Remove estrutura básica de boilerplate (packages, imports, declaração de classe e main)
+  const withoutBoilerplate = withoutPrints
+    .replace(/package\s+[\w.]+\s*;/g, '')
+    .replace(/import\s+[\w.*]+\s*;/g, '')
+    .replace(/(?:public|protected|private|static|final|\s)*class\s+\w+(?:\s+extends\s+\w+)?(?:\s+implements\s+[\w,\s]+)?\s*\{?/g, '')
+    .replace(/(?:public|protected|private|static|final|\s)*void\s+main\s*\([^)]*\)\s*(?:throws\s+[\w,\s]+)?\s*\{?/g, '')
+    .replace(/[\{\}\s]/g, '');
+
+  return withoutBoilerplate.length === 0;
+}
+
+export function parseAsJava(trimmed: string): CstNode | null {
   for (const entryPoint of FRAGMENT_ENTRY_POINTS) {
     try {
       return parse(trimmed, entryPoint);
@@ -84,8 +105,60 @@ function containsRuleNamed(element: unknown, ruleName: string): boolean {
   );
 }
 
+export function countRuleOccurrences(element: unknown, ruleName: string): number {
+  if (!hasChildren(element)) return 0;
+  let count = 0;
+  if (ruleName in element.children) {
+    count += element.children[ruleName].length;
+  }
+  for (const childList of Object.values(element.children)) {
+    for (const child of childList) {
+      count += countRuleOccurrences(child, ruleName);
+    }
+  }
+  return count;
+}
+
+export function countBlockStatements(cst: CstNode): number {
+  return countRuleOccurrences(cst, 'blockStatement');
+}
+
 function hasExecutableStatement(cst: CstNode): boolean {
   return containsRuleNamed(cst, 'blockStatement');
+}
+
+export function checkExerciseSubstance(
+  studentCode: string,
+  initialExerciseCode: string
+): JavaHeuristicResult {
+  const trimmedStudent = studentCode.trim();
+  const cstStudent = parseAsJava(trimmedStudent);
+  if (!cstStudent) {
+    return NOT_JAVA_RESULT;
+  }
+
+  const studentStatements = countBlockStatements(cstStudent);
+  
+  // Se o aluno tiver menos de 4 instruções executáveis
+  if (studentStatements < 4) {
+    return {
+      isValid: false,
+      reason: TRIVIAL_EXERCISE_REASON,
+    };
+  }
+
+  // Verifica proporção de tamanho de código limpo (sem comentários nem espaços)
+  const normStudent = stripComments(trimmedStudent).replace(/\s+/g, '');
+  const normInitial = stripComments(initialExerciseCode.trim()).replace(/\s+/g, '');
+
+  if (normInitial.length > 200 && normStudent.length < normInitial.length * 0.15) {
+    return {
+      isValid: false,
+      reason: TRIVIAL_EXERCISE_REASON,
+    };
+  }
+
+  return VALID_RESULT;
 }
 
 export function checkJavaHeuristics(code: string): JavaHeuristicResult {
@@ -96,6 +169,11 @@ export function checkJavaHeuristics(code: string): JavaHeuristicResult {
 
   if (stripComments(trimmed).length === 0) {
     return ONLY_COMMENTS_RESULT;
+  }
+
+  // 1ª Camada: Detecta se o código é composto exclusivamente por impressões triviais (ex: System.out.println)
+  if (isTrivialPrintOnlyCode(trimmed)) {
+    return ONLY_PRINTS_RESULT;
   }
 
   const cst = parseAsJava(trimmed);

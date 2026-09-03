@@ -9,7 +9,7 @@ import { ExerciseSelector } from '@/components/ExerciseSelector';
 import { AnalysisResult, ApplicationState, AppTheme, Exercise } from '@/types';
 import { AlertCircle, Sparkles } from 'lucide-react';
 import { sanitizeCode } from '@/lib/sanitizer';
-import { checkJavaHeuristics } from '@/lib/heuristics';
+import { checkJavaHeuristics, checkExerciseSubstance } from '@/lib/heuristics';
 import { isTooSimilarToInitialCode } from '@/lib/similarity';
 
 const STORAGE_KEYS = {
@@ -79,12 +79,23 @@ function validateJavaInput(code: string, initialExerciseCode?: string): CodeVali
     };
   }
 
-  if (initialExerciseCode && isTooSimilarToInitialCode(sanitizedCode, initialExerciseCode)) {
-    return {
-      isValid: false,
-      sanitizedCode,
-      errorMessage: 'O código enviado é praticamente idêntico ao código inicial do exercício. Tente realizar a refatoração antes de solicitar a análise.',
-    };
+  if (initialExerciseCode) {
+    if (isTooSimilarToInitialCode(sanitizedCode, initialExerciseCode)) {
+      return {
+        isValid: false,
+        sanitizedCode,
+        errorMessage: 'O código enviado é praticamente idêntico ao código inicial do exercício. Tente realizar a refatoração antes de solicitar a análise.',
+      };
+    }
+
+    const substance = checkExerciseSubstance(sanitizedCode, initialExerciseCode);
+    if (!substance.isValid) {
+      return {
+        isValid: false,
+        sanitizedCode,
+        errorMessage: substance.reason || 'O código enviado não implementa as regras necessárias para o exercício.',
+      };
+    }
   }
 
   return { isValid: true, sanitizedCode };

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { CLEAN_CODE_ANALYZER_PROMPT } from '@/prompts/analyzerPrompt';
 import { sanitizeCode } from '@/lib/sanitizer';
-import { checkJavaHeuristics } from '@/lib/heuristics';
+import { checkJavaHeuristics, checkExerciseSubstance } from '@/lib/heuristics';
 import { getCodeHash, getCachedAnalysis, setCachedAnalysis } from '@/lib/cache';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { getServerExerciseById } from '@/lib/exercisesServer';
@@ -179,19 +179,37 @@ export async function POST(request: Request) {
     // 5. Verifica se há contexto de exercício pré-pronto com solução de referência
     const exercise = currentExerciseId !== 'free-mode' ? getServerExerciseById(currentExerciseId) : undefined;
 
-    if (exercise && isTooSimilarToInitialCode(sanitizedCode, exercise.initialCode)) {
-      const simError = 'O código enviado é praticamente idêntico ao código inicial do exercício. Tente realizar a refatoração antes de solicitar a análise.';
-      logSubmission({
-        ip: clientIp,
-        sessionId,
-        exerciseId: exercise.id,
-        status: 'SIMILARITY_REJECT',
-        durationMs: Date.now() - startTime,
-        codeLength: sanitizedCode.length,
-        error: simError,
-      });
-      const similarResponse = NextResponse.json({ error: simError }, { status: 400 });
-      return attachSession(similarResponse, sessionId);
+    if (exercise) {
+      if (isTooSimilarToInitialCode(sanitizedCode, exercise.initialCode)) {
+        const simError = 'O código enviado é praticamente idêntico ao código inicial do exercício. Tente realizar a refatoração antes de solicitar a análise.';
+        logSubmission({
+          ip: clientIp,
+          sessionId,
+          exerciseId: exercise.id,
+          status: 'SIMILARITY_REJECT',
+          durationMs: Date.now() - startTime,
+          codeLength: sanitizedCode.length,
+          error: simError,
+        });
+        const similarResponse = NextResponse.json({ error: simError }, { status: 400 });
+        return attachSession(similarResponse, sessionId);
+      }
+
+      const substance = checkExerciseSubstance(sanitizedCode, exercise.initialCode);
+      if (!substance.isValid) {
+        const substanceError = substance.reason || 'O código enviado não implementa a lógica necessária para o exercício.';
+        logSubmission({
+          ip: clientIp,
+          sessionId,
+          exerciseId: exercise.id,
+          status: 'HEURISTIC_REJECT',
+          durationMs: Date.now() - startTime,
+          codeLength: sanitizedCode.length,
+          error: substanceError,
+        });
+        const substanceResponse = NextResponse.json({ error: substanceError }, { status: 400 });
+        return attachSession(substanceResponse, sessionId);
+      }
     }
 
     // 6. Verificação do cache em memória (SHA-256 isolado por exercício)
@@ -245,7 +263,8 @@ ${exercise.objectives.map(obj => `- ${obj}`).join('\n')}
 DIRETRIZ CRUCIAL DE ESCOPO E ARQUITETURA PARA ESTE EXERCÍCIO:
 - O nível de arquitetura e abstração esperado para este exercício é EXATAMENTE o do gabarito abaixo.
 - Se o gabarito do professor estiver contido em uma única classe (como neste exercício), É ESTRITAMENTE PROIBIDO apontar "God Class" ou exigir a criação de novas classes (como classe Aluno, etc.).
-- Avalie se o aluno cumpriu os objetivos específicos deste exercício (${exercise.category}). Se a solução do aluno for equivalente em clareza ao gabarito, atribua NOTA 10.
+- Avalie se o aluno cumpriu os objetivos específicos deste exercício (${exercise.category}). Se a solução do aluno for equivalente em clareza ao gabarito mantendo as regras de negócio, atribua NOTA 10.
+- REGRA ANTI-ESVAZIAMENTO (NOTA ZERO OBRIGATÓRIA): Se o aluno apagou as regras de negócio ou enviou código trivial (como prints avulsos ou classes sem a lógica do domínio de ${exercise.title}), atribua NOTA 0 imediatamente com o problema "Lógica do exercício ausente: as regras de negócio e objetivos do problema foram apagados em vez de refatorados.".
 - REGRA DE CONFIDENCIALIDADE: O código abaixo é estritamente para calibração interna. É TERMINANTEMENTE PROIBIDO citar as palavras "gabarito", "professor" ou "(como no gabarito)" no seu JSON de resposta ao aluno.
 
 Gabarito ideal de referência do professor (CONFIDENCIAL):

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "lint": "eslint",
-    "test:load": "tsx scripts/loadTest.ts"
+    "test:load": "tsx scripts/loadTest.ts",
+    "test:suite": "node scripts/test-suite-30.js"
   },
   "dependencies": {
     "@types/canvas-confetti": "^1.9.0",

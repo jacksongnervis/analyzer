@@ -19,9 +19,16 @@ function loadExerciseFolder(folderPath: string, folderName: string): ServerExerc
     const info = JSON.parse(infoRaw);
 
     const initialCode = fs.readFileSync(dirtyPath, 'utf-8').trim();
-    const expectedCleanCode = fs.existsSync(cleanPath) 
-      ? fs.readFileSync(cleanPath, 'utf-8').trim() 
-      : '';
+    
+    let expectedCleanCode = '';
+    if (fs.existsSync(cleanPath)) {
+      expectedCleanCode = fs.readFileSync(cleanPath, 'utf-8').trim();
+    } else {
+      const cleanFiles = fs.readdirSync(folderPath).filter(f => /^clean.*\.java$/i.test(f));
+      if (cleanFiles.length > 0) {
+        expectedCleanCode = fs.readFileSync(path.join(folderPath, cleanFiles[0]), 'utf-8').trim();
+      }
+    }
 
     return {
       id: typeof info.id === 'string' ? info.id : folderName,
