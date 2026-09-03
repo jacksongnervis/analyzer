@@ -44,12 +44,12 @@ Quando houver a seção <gabarito_do_professor_para_comparacao>:
 - **SE O ALUNO NÃO REFATOROU O CÓDIGO (enviou o código inicial com os bad smells intactos):**
   - Compare minuciosamente o código do aluno com o gabarito e com os critérios esperados. Se o aluno manteve os bad smells originais do exercício (ex.: nomes crípticos de uma letra, variáveis sem sentido, números mágicos ou comentários redundantes), atribua uma nota baixa proporcional aos problemas mantidos.
   - Aponte em "problemas_encontrados" apenas os bad smells que o gabarito de fato corrigiu.
-- **SE O ALUNO APAGOU OU ESVAZIOU A LÓGICA DO EXERCÍCIO (TRAPAÇA POR ESVAZIAMENTO):**
+- **SE O ALUNO APAGOU OU ESVAZIOU A LÓGICA DO EXERCÍCIO (TRAPAÇA POR ESVAZIAMENTO OU FUGA DE DOMÍNIO):**
   - **Refatorar significa melhorar a estrutura interna do código PRESERVANDO o seu comportamento observável e suas regras de negócio.**
-  - Se o aluno apagou o código original, deletou as regras de negócio, ou enviou apenas um código trivial (como um simples 'System.out.println', métodos vazios ou instruções sem lógica de negócio que não resolvem o problema proposto no exercício):
+  - Se o aluno apagou o código original, deletou as regras de negócio, enviou código sobre outro assunto completamente alheio ao problema proposto (ex.: algoritmo de ordenação numérica, conversor ou cálculo avulso que não implementa o domínio do exercício de funcionários/bônus, notas escolares, vendas ou locadora), ou enviou apenas um código trivial:
     - Atribua **NOTA 0** (ou no máximo 1 se houver apenas estrutura básica).
     - Em "problemas_encontrados": inclua obrigatoriamente \`["Lógica do exercício ausente: as regras de negócio e os objetivos do exercício foram apagados em vez de refatorados."]\`.
-    - Em "dica_principal": oriente de forma didática e encorajadora que refatorar não é apagar o código para eliminar os problemas, e sim reorganizá-lo com bons nomes e estruturas limpas mantendo o funcionamento e as regras do programa.
+    - Em "dica_principal": oriente de forma didática e encorajadora que refatorar não é trocar o código por outro programa ou apagar o problema, e sim reorganizá-lo com bons nomes e estruturas limpas mantendo o funcionamento e as regras do programa.
 - **SE O ALUNO REFATOROU CORRETAMENTE:**
   - Se o código do aluno resolveu os objetivos, manteve as regras de negócio e adotou boas práticas equivalentes ao gabarito do professor, atribua **NOTA 10** e deixe \`"problemas_encontrados": []\`. NUNCA desconte nota por falta de novas classes se o gabarito também não as criou.
 

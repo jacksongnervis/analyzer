@@ -645,102 +645,103 @@ public class DiarioEscolarRefatorado {
   {
     id: 27,
     tier: 'IA - Nota Alta (8 a 10)',
-    name: 'Ex 2: Polimorfismo e encapsulamento aplicados com clareza',
+    name: 'Ex 2: Métodos pequenos e constantes para cálculo de bônus',
     exerciseId: '02-encapsulamento-polimorfismo',
     expectedStatus: 200,
     expectedScoreRange: [8, 10],
-    code: `import java.util.ArrayList;
-import java.util.List;
+    code: `import java.util.Scanner;
 
-abstract class Colaborador {
-    private final String nome;
-    private final double salarioBase;
+public class CalculadoraBonus {
+    private static final int CARGO_GERENTE = 1;
+    private static final int CARGO_DESENVOLVEDOR = 2;
+    private static final int CARGO_ESTAGIARIO = 3;
 
-    public Colaborador(String nome, double salarioBase) {
-        this.nome = nome;
-        this.salarioBase = salarioBase;
-    }
-    public String getNome() { return nome; }
-    public double getSalarioBase() { return salarioBase; }
-    public abstract double calcularBonus();
-}
+    private static final double TAXA_GERENTE = 0.20;
+    private static final double ADICIONAL_GERENTE = 1000.0;
+    private static final double TAXA_DEV = 0.10;
+    private static final double ADICIONAL_DEV = 300.0;
+    private static final double TAXA_ESTAGIARIO = 0.05;
 
-class GerenteEmpresa extends Colaborador {
-    private static final double PERCENTUAL_BONUS = 0.20;
-    private static final double ADICIONAL_FIXO = 1000.0;
-
-    public GerenteEmpresa(String nome, double salarioBase) {
-        super(nome, salarioBase);
-    }
-    @Override
-    public double calcularBonus() {
-        return (getSalarioBase() * PERCENTUAL_BONUS) + ADICIONAL_FIXO;
-    }
-}
-
-class DesenvolvedorEmpresa extends Colaborador {
-    private static final double PERCENTUAL_BONUS = 0.10;
-
-    public DesenvolvedorEmpresa(String nome, double salarioBase) {
-        super(nome, salarioBase);
-    }
-    @Override
-    public double calcularBonus() {
-        return getSalarioBase() * PERCENTUAL_BONUS;
-    }
-}
-
-public class FolhaPagamentoBonus {
     public static void main(String[] args) {
-        List<Colaborador> colaboradores = new ArrayList<>();
-        colaboradores.add(new GerenteEmpresa("Alice", 8000.0));
-        colaboradores.add(new DesenvolvedorEmpresa("Bruno", 4500.0));
+        Scanner entrada = new Scanner(System.in);
+        System.out.print("Salário: ");
+        double salario = entrada.nextDouble();
+        System.out.print("Cargo (1-Gerente, 2-Dev, 3-Estagiário): ");
+        int cargo = entrada.nextInt();
 
-        for (Colaborador c : colaboradores) {
-            System.out.println(c.getNome() + " | Bônus: R$ " + c.calcularBonus());
+        double bonus = calcularBonus(cargo, salario);
+        System.out.printf("Bônus calculado: R$ %.2f%n", bonus);
+        entrada.close();
+    }
+
+    public static double calcularBonus(int cargo, double salario) {
+        if (cargo == CARGO_GERENTE) {
+            return (salario * TAXA_GERENTE) + ADICIONAL_GERENTE;
         }
+        if (cargo == CARGO_DESENVOLVEDOR) {
+            return (salario * TAXA_DEV) + ADICIONAL_DEV;
+        }
+        if (cargo == CARGO_ESTAGIARIO) {
+            return salario * TAXA_ESTAGIARIO;
+        }
+        return 0.0;
     }
 }`
   },
   {
     id: 28,
     tier: 'IA - Nota Alta (8 a 10)',
-    name: 'Ex 3: Composição estrutural e estratégia de pagamento limpa',
+    name: 'Ex 3: Validação e modularização de descontos e formas de pagamento',
     exerciseId: '03-composicao-interfaces-solid',
     expectedStatus: 200,
     expectedScoreRange: [8, 10],
-    code: `interface MetodoPagamento {
-    void processarPagamento(double valor);
-}
+    code: `import java.util.Scanner;
 
-class PagamentoPix implements MetodoPagamento {
-    @Override
-    public void processarPagamento(double valor) {
-        System.out.println("Chave PIX gerada com sucesso para o valor: R$ " + valor);
-    }
-}
+public class FechamentoVenda {
+    private static final int CLIENTE_VIP = 2;
+    private static final int CLIENTE_FUNCIONARIO = 3;
+    private static final double DESCONTO_VIP = 0.10;
+    private static final double DESCONTO_FUNCIONARIO = 0.20;
 
-class PagamentoCartaoCredito implements MetodoPagamento {
-    @Override
-    public void processarPagamento(double valor) {
-        System.out.println("Transação de cartão aprovada no valor de: R$ " + valor);
-    }
-}
+    private static final int PAGAMENTO_PIX = 1;
+    private static final double DESCONTO_PIX = 0.05;
 
-class ClienteDados {
-    private final String nome;
-    public ClienteDados(String nome) { this.nome = nome; }
-    public String getNome() { return nome; }
-}
-
-public class VendaComposicaoLimpa {
     public static void main(String[] args) {
-        ClienteDados cliente = new ClienteDados("Roberto Silva");
-        double valorCompra = 450.0;
-        MetodoPagamento pagamento = new PagamentoPix();
+        Scanner entrada = new Scanner(System.in);
+        System.out.print("Valor da compra: ");
+        double valorCompra = entrada.nextDouble();
 
-        System.out.println("Cliente: " + cliente.getNome());
-        pagamento.processarPagamento(valorCompra);
+        if (valorCompra <= 0) {
+            System.out.println("Valor de compra inválido!");
+            entrada.close();
+            return;
+        }
+
+        System.out.print("Tipo do cliente (1-Comum, 2-VIP, 3-Func): ");
+        int tipoCliente = entrada.nextInt();
+
+        System.out.print("Pagamento (1-Pix, 2-Cartão): ");
+        int formaPagamento = entrada.nextInt();
+
+        double desconto = calcularDescontoCliente(valorCompra, tipoCliente);
+        double valorComDesconto = valorCompra - desconto;
+        double valorFinal = aplicarDescontoPix(valorComDesconto, formaPagamento);
+
+        System.out.printf("Total a pagar: R$ %.2f%n", valorFinal);
+        entrada.close();
+    }
+
+    public static double calcularDescontoCliente(double valor, int tipo) {
+        if (tipo == CLIENTE_VIP) return valor * DESCONTO_VIP;
+        if (tipo == CLIENTE_FUNCIONARIO) return valor * DESCONTO_FUNCIONARIO;
+        return 0.0;
+    }
+
+    public static double aplicarDescontoPix(double subtotal, int formaPagamento) {
+        if (formaPagamento == PAGAMENTO_PIX) {
+            return subtotal * (1.0 - DESCONTO_PIX);
+        }
+        return subtotal;
     }
 }`
   },
@@ -760,7 +761,7 @@ public class VendaComposicaoLimpa {
   {
     id: 30,
     tier: 'IA - Nota 10 (Gabarito / Clean Code)',
-    name: 'Ex 2: Gabarito Oficial de Encapsulamento e Polimorfismo (Clean.java)',
+    name: 'Ex 2: Gabarito Oficial de Funções e Responsabilidade Única (Clean.java)',
     exerciseId: '02-encapsulamento-polimorfismo',
     expectedStatus: 200,
     expectedScoreRange: [10, 10],

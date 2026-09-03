@@ -10,9 +10,9 @@ const ONLY_COMMENTS_REASON =
 const NO_SUBSTANCE_REASON =
   'O código enviado é sintaticamente válido, mas não tem nenhuma instrução para analisar (ex.: classe vazia, só um campo, import ou assinatura de método sem corpo). Envie um trecho com pelo menos uma linha de lógica.';
 const ONLY_PRINTS_REASON =
-  'O código enviado contém apenas impressões simples de texto (System.out.print) e nenhuma regra de negócio ou lógica para ser avaliada sob os critérios de Clean Code. Envie uma implementação com lógica de programação real.';
+  'O código enviado contém apenas impressões simples de texto e nenhuma regra de negócio ou lógica para ser avaliada.';
 const TRIVIAL_EXERCISE_REASON =
-  'O código enviado foi excessivamente reduzido e não implementa as regras de negócio do exercício. Refatore o código original mantendo as funcionalidades do programa em vez de apagá-lo.';
+  'O código enviado foi excessivamente reduzido e não implementa as regras de negócio do exercício.';
 
 const KEY_SPAM_REGEX = /([a-z])\1{20,}/i;
 
@@ -138,7 +138,7 @@ export function checkExerciseSubstance(
   }
 
   const studentStatements = countBlockStatements(cstStudent);
-  
+
   // Se o aluno tiver menos de 4 instruções executáveis
   if (studentStatements < 4) {
     return {
