@@ -1,6 +1,3 @@
-import fs from 'node:fs';
-import path from 'node:path';
-
 export type SubmissionStatus =
   | 'SUCCESS'
   | 'CACHE_HIT'
@@ -23,49 +20,32 @@ export interface AuditLogEntry {
   error?: string | null;
 }
 
-const LOG_DIR = path.join(process.cwd(), 'logs');
-const LOG_FILE = path.join(LOG_DIR, 'submissions.jsonl');
+const statusEmoji: Record<SubmissionStatus, string> = {
+  SUCCESS: '✅',
+  CACHE_HIT: '⚡',
+  RATE_LIMIT: '⏳',
+  HEURISTIC_REJECT: '🛑',
+  SIMILARITY_REJECT: '🔄',
+  INVALID_PAYLOAD: '❌',
+  AI_ERROR: '💥',
+};
 
 /**
- * Registra a submissão de código de forma estruturada e append-only em arquivo,
- * garantindo persistência para auditoria, contestações e acompanhamento das notas da oficina.
+ * Exibe a submissão de forma concisa no console sem criar arquivos no disco.
+ * Mantém o console limpo e informativo para acompanhamento pelo instrutor.
  */
 export function logSubmission(entry: Omit<AuditLogEntry, 'timestamp'>): void {
-  const fullEntry: AuditLogEntry = {
-    timestamp: new Date().toISOString(),
-    ...entry,
-  };
-
-  const logLine = JSON.stringify(fullEntry) + '\n';
-
-  try {
-    if (!fs.existsSync(LOG_DIR)) {
-      fs.mkdirSync(LOG_DIR, { recursive: true });
-    }
-    fs.appendFileSync(LOG_FILE, logLine, 'utf-8');
-  } catch (fsErr) {
-    console.error('[AuditLogger] Erro ao gravar log de auditoria no disco:', fsErr);
-  }
-
-  // Log conciso e legível no console para acompanhamento ao vivo pelo instrutor
-  const statusEmoji: Record<SubmissionStatus, string> = {
-    SUCCESS: '✅',
-    CACHE_HIT: '⚡',
-    RATE_LIMIT: '⏳',
-    HEURISTIC_REJECT: '🛑',
-    SIMILARITY_REJECT: '🔄',
-    INVALID_PAYLOAD: '❌',
-    AI_ERROR: '💥',
-  };
-
-  const emoji = statusEmoji[fullEntry.status] || '📝';
-  const scoreStr = fullEntry.pontuacao !== undefined && fullEntry.pontuacao !== null
-    ? `| Nota: ${fullEntry.pontuacao}/10 `
-    : '';
+  const time = new Date().toISOString().slice(11, 19);
+  const emoji = statusEmoji[entry.status] || '📝';
+  const scoreStr =
+    entry.pontuacao !== undefined && entry.pontuacao !== null
+      ? `| Nota: ${entry.pontuacao}/10 `
+      : '';
+  const errorSuffix = entry.error ? ` | Erro: ${entry.error}` : '';
 
   console.info(
-    `[AUDIT ${fullEntry.timestamp.slice(11, 19)}] ${emoji} [${fullEntry.status}] ` +
-    `IP: ${fullEntry.ip} | Sessão: ${fullEntry.sessionId.slice(0, 8)} | ` +
-    `Ex: ${fullEntry.exerciseId} ${scoreStr}(${fullEntry.durationMs}ms)`
+    `[AUDIT ${time}] ${emoji} [${entry.status}] ` +
+      `Sessão: ${entry.sessionId.slice(0, 8)} | ` +
+      `Ex: ${entry.exerciseId} ${scoreStr}(${entry.durationMs}ms)${errorSuffix}`
   );
 }

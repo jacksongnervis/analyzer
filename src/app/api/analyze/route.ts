@@ -5,7 +5,7 @@ import { checkJavaHeuristics } from '@/lib/heuristics';
 import { getCodeHash, getCachedAnalysis, setCachedAnalysis } from '@/lib/cache';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { getServerExerciseById } from '@/lib/exercisesServer';
-import { runLoadBalancedAnalysis, getGroqApiKeys } from '@/lib/groqPool';
+import { runLoadBalancedAnalysis, hasConfiguredAiKeys } from '@/lib/groqPool';
 import { isTooSimilarToInitialCode } from '@/lib/similarity';
 import { validateAndSanitizeAnalysisResult } from '@/lib/responseValidator';
 import { logSubmission } from '@/lib/auditLogger';
@@ -217,10 +217,9 @@ export async function POST(request: Request) {
       return attachSession(cachedResponse, sessionId);
     }
 
-    // 7. Verificação das chaves da API do Groq no Pool
-    const availableKeys = getGroqApiKeys();
-    if (availableKeys.length === 0) {
-      const noKeyError = 'Nenhuma chave da API do Groq configurada no servidor (.env).';
+    // 7. Verificação das chaves de IA (Groq ou OpenRouter)
+    if (!hasConfiguredAiKeys()) {
+      const noKeyError = 'Nenhuma chave de IA configurada no servidor (.env). Configure GROQ_API_KEYS ou OPENROUTER_API_KEY.';
       logSubmission({
         ip: clientIp,
         sessionId,
@@ -247,8 +246,9 @@ DIRETRIZ CRUCIAL DE ESCOPO E ARQUITETURA PARA ESTE EXERCÍCIO:
 - O nível de arquitetura e abstração esperado para este exercício é EXATAMENTE o do gabarito abaixo.
 - Se o gabarito do professor estiver contido em uma única classe (como neste exercício), É ESTRITAMENTE PROIBIDO apontar "God Class" ou exigir a criação de novas classes (como classe Aluno, etc.).
 - Avalie se o aluno cumpriu os objetivos específicos deste exercício (${exercise.category}). Se a solução do aluno for equivalente em clareza ao gabarito, atribua NOTA 10.
+- REGRA DE CONFIDENCIALIDADE: O código abaixo é estritamente para calibração interna. É TERMINANTEMENTE PROIBIDO citar as palavras "gabarito", "professor" ou "(como no gabarito)" no seu JSON de resposta ao aluno.
 
-Gabarito ideal de referência do professor:
+Gabarito ideal de referência do professor (CONFIDENCIAL):
 ${exercise.expectedCleanCode}
 </gabarito_do_professor_para_comparacao>`;
     }

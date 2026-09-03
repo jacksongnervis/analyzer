@@ -27,7 +27,7 @@ export function validateAndSanitizeAnalysisResult(data: unknown): AnalysisResult
   } else if (typeof raw.score === 'number' && !Number.isNaN(raw.score)) {
     pontuacao = raw.score;
   }
-  
+
   // Limita estritamente ao intervalo de 0 a 10
   pontuacao = Math.max(0, Math.min(10, Math.round(pontuacao)));
 

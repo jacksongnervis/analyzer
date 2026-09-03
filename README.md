@@ -47,7 +47,9 @@ Uma aplicação web moderna e interativa desenvolvida para apoiar atividades pr�
   - Memorização do tema visual escolhido.
 
 - **Proteção e Alta Disponibilidade**:
-  - **Load Balancer com Round-Robin e Failover**: Distribui requisições automaticamente entre múltiplas chaves da API Groq configuradas no `.env`.
+  - **Arquitetura Dual-Tier com Fallback Automático**:
+    1. **Tier 1 (Groq)**: Requisições utilizam primeiramente as chaves da Groq com Round-Robin e failover automático.
+    2. **Tier 2 (OpenRouter DeepSeek)**: Se as chaves da Groq atingirem limite de taxa (`429 Rate Limit`) ou se não houver chaves Groq configuradas, o sistema aciona instantaneamente o **DeepSeek V3** via OpenRouter com resposta em ~2 segundos.
   - **Cooldown Anti-Spam de 60s**: Contador regressivo visível diretamente no botão de análise com persistência contra F5.
   - **Sistema de Cache SHA-256**: Respostas instantâneas para códigos e exercícios previamente analisados.
 
@@ -74,11 +76,15 @@ npm install
 ```
 
 ### 3. Configuração de Variáveis de Ambiente
-Crie um arquivo `.env` na raiz do projeto:
+Crie um arquivo `.env` na raiz do projeto (ou copie a partir do `.env.example`):
 
 ```env
-# Você pode informar uma única chave ou múltiplas chaves separadas por vírgula para o Load Balancer
-GROQ_API_KEYS=gsk_chave1,gsk_chave2,gsk_chave3
+# 1. Groq API (Tier 1 - Primário: Gratuito e Rápido)
+GROQ_API_KEYS=gsk_chave1,gsk_chave2
+
+# 2. OpenRouter API (Tier 2 - Alta Capacidade e Resposta Imediata)
+OPENROUTER_API_KEY=sk-or-v1-sua-chave-aqui
+OPENROUTER_MODEL=deepseek/deepseek-chat
 ```
 
 ### 4. Execução em Desenvolvimento
@@ -122,7 +128,8 @@ npm run start
 │   ├── lib/
 │   │   ├── cache.ts            # Gerenciamento de cache em memória (SHA-256)
 │   │   ├── exercisesServer.ts  # Leitura e resolução segura dos exercícios
-│   │   ├── groqPool.ts         # Pool de clientes Groq, Round-Robin e Failover
+│   │   ├── groqPool.ts         # Orquestrador híbrido com Semáforo, Round-Robin e Fallback
+│   │   ├── openRouter.ts       # Cliente OpenRouter (DeepSeek) com fetch nativo
 │   │   ├── heuristics.ts       # Validação sintática Java via java-parser CST
 │   │   ├── rateLimit.ts        # Controle de cooldown por IP
 │   │   └── sanitizer.ts        # Sanitização e normalização de código
