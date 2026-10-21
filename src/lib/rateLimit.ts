@@ -7,8 +7,8 @@ export interface RateLimitResult {
 const sessionCooldownMap = new Map<string, number>();
 const ipBurstMap = new Map<string, number[]>();
 
-// Cooldown de 60 segundos por sessão de aluno
-const COOLDOWN_SECONDS = 60;
+// Cooldown de 10 segundos por sessão de aluno
+const COOLDOWN_SECONDS = 10;
 const COOLDOWN_MS = COOLDOWN_SECONDS * 1000;
 
 // Limite de segurança contra rajadas abusivas no mesmo IP (max 45 requisições por minuto por IP)
@@ -48,7 +48,7 @@ export function checkRateLimit(ip: string, sessionId: string): RateLimitResult {
 
   const sessionKey = `${ip}#${sessionId}`;
 
-  // 1. Verifica cooldown individual do aluno (60 segundos após submissão)
+  // 1. Verifica cooldown individual do aluno (10 segundos após submissão)
   const nextAllowedTime = sessionCooldownMap.get(sessionKey);
   if (nextAllowedTime && now < nextAllowedTime) {
     const remainingSeconds = Math.ceil((nextAllowedTime - now) / 1000);

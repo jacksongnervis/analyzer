@@ -50,7 +50,7 @@ Uma aplicação web moderna e interativa desenvolvida para apoiar atividades pr�
   - **Arquitetura Dual-Tier com Fallback Automático**:
     1. **Tier 1 (Groq)**: Requisições utilizam primeiramente as chaves da Groq com Round-Robin e failover automático.
     2. **Tier 2 (OpenRouter DeepSeek)**: Se as chaves da Groq atingirem limite de taxa (`429 Rate Limit`) ou se não houver chaves Groq configuradas, o sistema aciona instantaneamente o **DeepSeek V3** via OpenRouter com resposta em ~2 segundos.
-  - **Cooldown Anti-Spam de 60s**: Contador regressivo visível diretamente no botão de análise com persistência contra F5.
+  - **Cooldown Anti-Spam de 10s**: Contador regressivo visível diretamente no botão de análise com persistência contra F5.
   - **Sistema de Cache SHA-256**: Respostas instantâneas para códigos e exercícios previamente analisados.
 
 - **Design e Acessibilidade**:

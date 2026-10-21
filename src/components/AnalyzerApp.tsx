@@ -39,7 +39,7 @@ const MIN_CODE_LENGTH = 10;
 const MAX_CODE_LENGTH = 5000;
 const MAX_RETRIES = 2;
 const BASE_RETRY_DELAY_MS = 2000;
-const SUCCESS_COOLDOWN_SECONDS = 60;
+const SUCCESS_COOLDOWN_SECONDS = 10;
 
 interface CodeValidationResult {
   readonly isValid: boolean;
@@ -145,11 +145,11 @@ async function requestAnalysis(code: string, exerciseId: string | null): Promise
 
     if (response.status === 429) {
       const retryAfterHeader = response.headers.get('Retry-After');
-      const retryAfterSeconds = retryAfterHeader ? parseInt(retryAfterHeader, 10) : 60;
+      const retryAfterSeconds = retryAfterHeader ? parseInt(retryAfterHeader, 10) : SUCCESS_COOLDOWN_SECONDS;
       return {
         status: 'rate_limit',
         error: message || 'Limite de requisições excedido. Aguarde alguns instantes e tente novamente.',
-        retryAfterSeconds: isNaN(retryAfterSeconds) ? 60 : retryAfterSeconds,
+        retryAfterSeconds: isNaN(retryAfterSeconds) ? SUCCESS_COOLDOWN_SECONDS : retryAfterSeconds,
       };
     }
 
