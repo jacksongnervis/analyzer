@@ -1,37 +1,32 @@
-import java.util.Scanner;
+public class Funcionario {
+    public String nome;
+    public int tipo;
+    public double salarioBase;
+    
+    public String banco;
+    public String agencia;
+    public String conta;
 
-public class Dirty {
-    public static void main(String[] args) {
-        Scanner s = new Scanner(System.in);
+    public Funcionario(String n, int t, double s, String b, String ag, String c) {
+        nome = n; tipo = t; salarioBase = s; banco = b; agencia = ag; conta = c;
+    }
 
-        System.out.print("Nome: "); String n = s.next();
-        System.out.print("Idade: "); int i = s.nextInt();
-        System.out.print("Tipo veiculo (1-Carro, 2-Moto): "); int t = s.nextInt();
-        System.out.print("Qtd dias: "); int d = s.nextInt();
-
-        if (i < 18) {
-            System.out.println("Erro: menor de idade nao pode alugar.");
-        } else {
-            if (d <= 0) {
-                System.out.println("Erro: qtd de dias invalida.");
-            } else {
-                double v = 0;
-
-                if (t == 1) {
-                    v = d * 100.0;
-                    if (d > 7) v = v - (v * 0.10);
-                } else if (t == 2) {
-                    v = d * 50.0;
-                    if (d > 5) v = v - (v * 0.05);
-                } else {
-                    System.out.println("Erro: tipo invalido.");
-                }
-
-                if (v > 0) {
-                    System.out.println("\nRecibo:");
-                    System.out.println("Cliente: " + n + " | Total a pagar: R$ " + v);
-                }
-            }
+    public double calcular() {
+        if (tipo == 1) {
+            return salarioBase + (salarioBase * 0.20);
+        } else if (tipo == 2) {
+            return salarioBase + (salarioBase * 0.10);
         }
+        return salarioBase;
+    }
+}
+
+class Dirty {
+    public static void main(String[] args) {
+        Funcionario f1 = new Funcionario("Ana", 1, 5000, "Nubank", "0001", "123-4");
+        Funcionario f2 = new Funcionario("Carlos", 2, 3000, "Inter", "0001", "999-9");
+        
+        System.out.println("Salário Ana: " + f1.calcular());
+        System.out.println("Salário Carlos: " + f2.calcular());
     }
 }
