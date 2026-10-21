@@ -1,13 +1,13 @@
 {
-  "id": "03-composicao-interfaces-solid",
-  "title": "3. Validação de Regras e Modularização",
-  "category": "Validação e Modularização",
+  "id": "03-encapsulamento-boas-praticas",
+  "title": "3. Encapsulamento e Responsabilidade Única",
+  "category": "Orientação a Objetos",
   "difficulty": "Intermediário",
-  "description": "O sistema de fechamento de caixa de uma loja calcula descontos e formas de pagamento, mas está com variáveis confusas, números mágicos e nenhuma validação para entradas incorretas. Refatore o código adotando nomes significativos, constantes claras, validações de regra de negócio (guard clauses) e divida os cálculos em funções pequenas.",
+  "description": "O sistema de gerenciamento de fichas de um fliperama expõe seus dados publicamente (quebrando o encapsulamento) e utiliza um método genérico com nomes crípticos para alterar o saldo. Refatore o código protegendo os atributos com modificadores de acesso, garantindo a inicialização correta via construtor e criando métodos descritivos com validações para cada ação específica.",
   "objectives": [
-    "As variáveis e constantes possuem nomes claros e intuitivos para cada dado da venda (cliente, valor, descontos)?",
-    "Existem validações que impedem valores inválidos (como valor de compra menor ou igual a zero)?",
-    "Os percentuais de desconto e opções de pagamento foram substituídos por constantes explicativas?",
-    "A lógica de desconto e de pagamento foi organizada em funções/métodos com responsabilidade bem definida?"
+    "O atributo de fichas foi protegido com o modificador 'private' para garantir o encapsulamento?",
+    "Foi implementado um construtor para garantir que a conta do jogador inicie com um estado válido e seguro?",
+    "O método confuso 'op' foi substituído por métodos com nomes claros e responsabilidade única (ex: comprarFichas, jogarPartida)?",
+    "Foram adicionadas validações de regra de negócio para evitar operações inválidas, como tentar jogar sem saldo suficiente?"
   ]
 }

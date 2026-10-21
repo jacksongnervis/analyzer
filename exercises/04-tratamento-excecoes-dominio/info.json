@@ -1,13 +1,13 @@
 {
-  "id": "04-tratamento-excecoes-dominio",
-  "title": "4. Tratamento de Exceções e Lógica de Domínio",
-  "category": "Tratamento de Exceções e POO",
-  "difficulty": "Avançado",
-  "description": "O sistema valida regras de negócio imprimindo mensagens na tela, utiliza um bloco genérico que 'engole' exceções reais e carece de polimorfismo no cálculo das diárias. Refatore criando exceções customizadas, aplicando programação defensiva e separando o domínio da interface de usuário.",
+  "id": "04-numeros-magicos-metodos-estaticos",
+  "title": "4. Números Mágicos e Métodos de Classe",
+  "category": "Constantes e Modificadores",
+  "difficulty": "Intermediário",
+  "description": "O sistema de radar de trânsito está acoplado a 'números mágicos' perdidos no código (como 80 e 5.0) e exige a criação desnecessária de um objeto apenas para realizar um cálculo simples. Refatore o código extraindo os valores fixos para constantes de classe, aplicando nomes descritivos e transformando o método em um método de classe (static) para reduzir o acoplamento e melhorar a reutilização.",
   "objectives": [
-    "A validação das regras de negócio está protegendo a integridade do objeto através do lançamento de exceções customizadas, ou o sistema apenas imprime um erro na tela?",
-    "O bloco 'try-catch' identifica e trata falhas específicas adequadamente, ou usa um 'catch' genérico que esconde o verdadeiro problema?",
-    "O cálculo do valor da reserva está amarrado a condicionais no método principal, ou foi abstraído usando polimorfismo para que cada tipo de quarto saiba calcular seu próprio valor?",
-    "A lógica de negócios foi totalmente separada da camada de interação com o usuário, garantindo o Princípio da Responsabilidade Única?"
+    "Os 'números mágicos' do limite de velocidade e do valor da multa foram extraídos para constantes de classe (public static final) bem nomeadas?",
+    "O método de cálculo foi transformado em um método de classe (static), eliminando a necessidade de usar 'new' para um cálculo puramente utilitário?",
+    "As variáveis curtas e confusas (como 'v', 'dif' e 'calc') foram renomeadas para nomes que revelam claramente sua intenção?",
+    "A estrutura do método 'main' foi simplificada para chamar o método de classe diretamente, diminuindo o acoplamento?"
   ]
 }

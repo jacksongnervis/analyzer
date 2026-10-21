@@ -1,13 +1,12 @@
 {
-  "id": "02-encapsulamento-polimorfismo",
-  "title": "2. Funções Pequenas e Responsabilidade Única",
-  "category": "Funções e Modularização",
+  "id": "02-aninhamento-guard-clauses",
+  "title": "2. Redução de Aninhamento e Guard Clauses",
+  "category": "Estruturas de Controle",
   "difficulty": "Iniciante",
-  "description": "O sistema de cálculo de bônus salarial funciona, mas o método principal faz tudo misturado: leitura de dados, cálculos com números mágicos e impressão de resultados. Refatore o código adotando nomes significativos, constantes para as regras de negócio e extraia o cálculo do bônus para uma função/método com responsabilidade única.",
+  "description": "O sistema de monitoramento de sensores funciona, mas sofre com aninhamento profundo de condicionais (Arrow Code) e uso de variáveis com nomes pouco descritivos ('i', 't'). Refatore o código adotando nomes significativos, extraindo limites numéricos para variáveis explicativas e utilizando Guard Clauses (inversão de lógica com 'continue') para reduzir o aninhamento e melhorar a legibilidade.",
   "objectives": [
-    "As variáveis e constantes possuem nomes claros e revelam exatamente a sua finalidade?",
-    "Os percentuais e valores de bônus foram transformados em constantes para eliminar números mágicos soltos no código?",
-    "A regra de cálculo do bônus foi separada em uma função/método próprio, evitando que o método principal faça tudo sozinho?",
-    "As mensagens exibidas para o usuário são profissionais, claras e amigáveis?"
+    "As variáveis do laço e de cálculo possuem nomes claros que revelam sua finalidade (como idSensor e temperaturaAtual)?",
+    "O limite crítico de temperatura foi extraído para uma variável bem nomeada, eliminando o número mágico '150' perdido no código?",
+    "O aninhamento profundo de 'ifs' foi reduzido utilizando a técnica de Guard Clause (Fail Fast), invertendo a lógica e usando o comando 'continue' para pular sensores ímpares?"
   ]
 }

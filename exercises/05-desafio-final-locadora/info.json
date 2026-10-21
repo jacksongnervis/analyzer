@@ -1,13 +1,13 @@
 {
-  "id": "05-desafio-final-locadora",
-  "title": "5. Desafio Final: O Chefão da Refatoração",
-  "category": "Revisão Geral (Clean Code, POO e Exceções)",
+  "id": "05-folha-pagamento-polimorfismo",
+  "title": "5. Polimorfismo, Composição e Herança",
+  "category": "Orientação a Objetos Avançada",
   "difficulty": "Desafio",
-  "description": "Este é o teste final. O sistema de locação sofre do 'Arrow Anti-Pattern' (ifs profundamente aninhados), ausência total de objetos, uso abusivo de números mágicos e tratamento de erros feito via console. Refatore o código aplicando todo o arsenal aprendido: encapsulamento, composição, polimorfismo, exceções customizadas e nomenclaturas limpas.",
+  "description": "A classe Funcionario atual é uma 'God Class' que acumula responsabilidades: guarda dados bancários misturados aos dados do funcionário e utiliza uma estrutura condicional baseada em 'números mágicos' (tipos 1 e 2) para calcular salários. Refatore o código aplicando Composição para isolar os dados bancários, transforme a classe base em Abstrata e utilize Herança e Polimorfismo para que cada cargo calcule seu próprio bônus.",
   "objectives": [
-    "A estrutura do código foi 'achatada', ou continua sofrendo do Anti-Padrão Arrow Code com múltiplos 'ifs' e 'elses' aninhados empurrando o código para a direita?",
-    "A validação de regras de negócio garante a integridade dos objetos lançando Exceções Customizadas, ou apenas imprime avisos na tela?",
-    "As lógicas de precificação e desconto estão encapsuladas em suas próprias classes usando Polimorfismo, eliminando a necessidade de verificar o tipo do veículo no método principal?",
-    "Os conceitos do mundo real foram devidamente abstraídos em classes através de Composição, com variáveis de nomes expressivos e constantes substituindo os 'números mágicos'?"
+    "Os dados da conta bancária foram extraídos para uma classe própria e integrados ao Funcionario através de Composição?",
+    "A lógica condicional (if/else baseada em 'tipo') foi substituída por Polimorfismo, criando classes filhas como Gerente e Desenvolvedor?",
+    "A classe base Funcionario e seu método de cálculo de salário foram transformados em abstrações (abstract), impedindo a instanciação direta de um funcionário genérico?",
+    "Os percentuais de bônus (0.20 e 0.10) foram substituídos por constantes explicativas dentro de suas respectivas classes filhas?"
   ]
 }
